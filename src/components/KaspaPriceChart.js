@@ -23,7 +23,7 @@ const KaspaPriceChart = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    });
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
