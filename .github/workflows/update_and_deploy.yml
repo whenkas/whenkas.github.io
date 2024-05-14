@@ -1,0 +1,42 @@
+name: Update and Deploy Kaspa Data
+
+on:
+  schedule:
+    - cron: '0 16 * * *' # Runs at 16:00 UTC (8:00 AM PST) every day
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run fetch_data script
+        run: node src/utils/fetch_data.js ./public/data
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add public/data/kaspa_prices_api.csv
+          git commit -m 'Update Kaspa prices data'
+          git push
+
+      - name: Run predeploy
+        run: yarn predeploy
+
+      - name: Run deploy
+        run: yarn deploy
