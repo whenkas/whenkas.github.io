@@ -19,10 +19,16 @@ const KaspaPriceChart = () => {
     const [monthTicks, setMonthTicks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
 
 
     useEffect(() => {
         fetchData();
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+
     });
 
     const daysSinceGenesis = (date) => {
@@ -231,35 +237,9 @@ const KaspaPriceChart = () => {
         }
     };
 
-    const buttonStyle = {
-        backgroundColor: '#4CAF50', /* Green */
-        border: 'none',
-        color: 'white',
-        padding: '20px 40px',
-        textAlign: 'center',
-        textDecoration: 'none',
-        display: 'block', // Center button
-        fontSize: '18px',
-        margin: '20px auto', // Center button
-        cursor: 'pointer',
-        borderRadius: '8px',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-        transition: 'background-color 0.3s, box-shadow 0.3s',
-    };
-
-    const titleStyle = {
-        color: '#FFFFFF',
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif',
-        textAlign: 'center',
-        fontSize: '28px',
-        marginTop: '20px',
-        borderRadius: '10px',
-    };
-
     const plotLayout = {
-        width: 920,
-        height: 440,
+        width: windowWidth > 600 ? 920 : windowWidth - 20,
+        height: windowWidth > 600 ? 440 : 300,
         title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
             type: 'log',
@@ -267,7 +247,7 @@ const KaspaPriceChart = () => {
             tickvals: monthTicks.map(tick => tick.value),
             ticktext: monthTicks.map(tick => tick.label),
             tickfont: {
-                size: 8,
+                size: windowWidth > 600 ? 8 : 6,
                 family: 'Arial, sans-serif',
                 color: '#7f7f7f'
             },
@@ -283,6 +263,32 @@ const KaspaPriceChart = () => {
         margin: { l: 50, r: 50, t: 50, b: 50 },
         paper_bgcolor: '#f4f4f4',
         plot_bgcolor: '#f4f4f4',
+    };
+
+    const titleStyle = {
+        color: '#FFFFFF',
+        padding: '20px',
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        fontSize: windowWidth > 600 ? '28px' : '20px',
+        marginTop: '20px',
+        borderRadius: '10px',
+    };
+
+    const buttonStyle = {
+        backgroundColor: '#4CAF50', /* Green */
+        border: 'none',
+        color: 'white',
+        padding: '15px 30px',
+        textAlign: 'center',
+        textDecoration: 'none',
+        display: 'block', // Center button
+        fontSize: windowWidth > 600 ? '18px' : '14px',
+        margin: '20px auto', // Center button
+        cursor: 'pointer',
+        borderRadius: '8px',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+        transition: 'background-color 0.3s, box-shadow 0.3s',
     };
 
     if (loading) {
