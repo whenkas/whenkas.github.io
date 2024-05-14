@@ -1,0 +1,63 @@
+name: Update and Deploy Kaspa Data
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+    - cron: '10 0 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run fetch_data script
+        run: node src/utils/fetch_data.js public/data
+
+      - name: Check for changes
+        id: git_status
+        run: |
+          git add public/data/*
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected"
+            echo "changes=true" >> $GITHUB_ENV
+          fi
+
+      - name: Commit and push changes
+        if: env.changes == 'true'
+        continue-on-error: true
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update Kaspa prices data'
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+
+      - name: Run predeploy
+        run: |
+          CI=false yarn predeploy
+
+      - name: Run deploy
+        env:
+          GIT_USER: github-actions[bot]
+          GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI: false
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          yarn deploy
