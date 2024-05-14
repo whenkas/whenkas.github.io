@@ -240,7 +240,7 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
+        title: `KAS/BTC PowerLaw and Kaspa Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
             type: 'log',
             autorange: true,
