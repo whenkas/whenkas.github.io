@@ -25,7 +25,7 @@ jobs:
         run: yarn install
 
       - name: Run fetch_data script
-        run: node src/utils/fetch_data.js./public/data
+        run: node src/utils/fetch_data.js /public/data
 
       - name: Commit and push changes
         run: |
