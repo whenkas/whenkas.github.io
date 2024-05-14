@@ -12,7 +12,7 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         const startTimestamp = start.unix();
         const endTimestamp = today.unix();
 
-        // Fetch KAS price history in BTC from six months ago to today
+        // Fetch KAS price history in BTC from ten months ago to today
         const kaspaResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/kaspa/market_chart/range?vs_currency=btc&from=${startTimestamp}&to=${endTimestamp}`);
         const kaspaData = kaspaResponse.data.prices;
 
@@ -24,13 +24,13 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         // Prepare new CSV data, keeping only the first data point per day
         const newCsvData = [];
         const seenDates = new Set();
-        for (const [date, priceInBTC] of kaspaData) {
-            const dateKey = new Date(date * 1000).toISOString().split('T')[0]; // Use only the date part
+        kaspaData.forEach(([date, priceInBTC]) => {
+            const dateKey = moment(date).format('YYYY-MM-DD');
             if (!seenDates.has(dateKey)) {
                 seenDates.add(dateKey);
-                newCsvData.push([new Date(date * 1000).toISOString(), priceInBTC]);
+                newCsvData.push([dateKey, priceInBTC.toFixed(10)]);
             }
-        }
+        });
 
         // Load existing CSV data
         const existingFilePath = `${folder}/kaspa_prices_api.csv`;
@@ -38,18 +38,13 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         if (fs.existsSync(existingFilePath)) {
             const existingCsvContent = fs.readFileSync(existingFilePath, 'utf8');
             const parsedExistingCsv = Papa.parse(existingCsvContent, { header: true, skipEmptyLines: true });
-            existingCsvData = parsedExistingCsv.data.map(entry => [entry['Start'], entry['Open']]);
+            existingCsvData = parsedExistingCsv.data.map(entry => [moment(entry['Start']).format('YYYY-MM-DD'), parseFloat(entry['Open']).toFixed(10)]);
         }
 
         // Merge data, preferring new data
-        const dataMap = new Map();
-        existingCsvData.forEach(([date, price]) => {
-            const dateKey = date.split('T')[0]; // Use only the date part for merging
-            dataMap.set(dateKey, [date, price]);
-        });
+        const dataMap = new Map(existingCsvData.map(([date, price]) => [date, [date, price]]));
         newCsvData.forEach(([date, price]) => {
-            const dateKey = date.split('T')[0]; // Use only the date part for merging
-            dataMap.set(dateKey, [date, price]); // Always prefer new data
+            dataMap.set(date, [date, price]);
         });
 
         const mergedCsvData = Array.from(dataMap.values());
@@ -70,7 +65,7 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
             });
         });
     } catch (error) {
-        console.error(`Error fetching price history for the last six months:`, error);
+        console.error(`Error fetching price history for the last ten months:`, error);
     }
 }
 
