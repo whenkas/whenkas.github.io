@@ -238,7 +238,7 @@ const KaspaPriceChart = () => {
     };
 
     const plotLayout = {
-        width: windowWidth > 600 ? 920 : windowWidth - 20,
+        width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
         title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
@@ -291,6 +291,13 @@ const KaspaPriceChart = () => {
         transition: 'background-color 0.3s, box-shadow 0.3s',
     };
 
+    const containerStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '10px',
+    };
+
     if (loading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <img src="/images/kaspa_pacman.gif" alt="Kaspa Pacman Animation" style={{ maxWidth: '300px' }} />
@@ -299,7 +306,7 @@ const KaspaPriceChart = () => {
     }
 
     return (
-        <div>
+        <div style={containerStyle}>
             <div style={titleStyle}>
                 <h3>Kaspa Will Overtake Bitcoin around</h3>
                 <h1>{intersectionEstimate.split(',')[0]}</h1>
@@ -325,4 +332,4 @@ const KaspaPriceChart = () => {
     );
 };
 
-export default KaspaPriceChart;
+export default KaspaPriceChart;       
