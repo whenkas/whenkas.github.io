@@ -3,7 +3,7 @@ name: Update and Deploy Kaspa Data
 on:
   schedule:
     - cron: '0 16 * * *' # Runs at 16:00 UTC (8:00 AM PST) every day
-    - cron: '0 1 * * *'  # Runs at 01:00 UTC (5:00 PM PST) every day
+    - cron: '10 0 * * *' # Runs at 00:10 UTC (4:10 PM PST) every day
   push:
     branches:
       - main
@@ -28,16 +28,30 @@ jobs:
       - name: Run fetch_data script
         run: node src/utils/fetch_data.js public/data
 
+      - name: Check for changes
+        id: git_status
+        run: |
+          git add public/data/kaspa_prices_api.csv
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+            echo "::set-output name=changes::false"
+          else
+            echo "Changes detected"
+            echo "::set-output name=changes::true"
+          fi
+
       - name: Commit and push changes
+        if: steps.git_status.outputs.changes == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add public/data/kaspa_prices_api.csv
           git commit -m 'Update Kaspa prices data'
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
       - name: Run predeploy
+        if: steps.git_status.outputs.changes == 'true'
         run: yarn predeploy
 
       - name: Run deploy
+        if: steps.git_status.outputs.changes == 'true'
         run: yarn deploy
