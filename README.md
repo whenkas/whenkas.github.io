@@ -2,6 +2,8 @@ When Kas
 
 A predictor for when kaspa overtakes bitcoin. It finds when kaspa powerlaw for the kas / btc price surpasses the price for it to be worth more then bitcoin. 
 
+See it at https://whenkas.github.io/
+
 <img width="958" alt="image" src="https://github.com/whenkas/whenkas.github.io/assets/169737990/211ce73c-1bc2-4c84-b29f-6c50cf8ec8bc">
 
 

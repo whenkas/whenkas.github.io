@@ -242,6 +242,7 @@ const KaspaPriceChart = () => {
         height: windowWidth > 600 ? 440 : 300,
         title: `KAS/BTC PowerLaw and Kas Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
+            title: 'Days since Genesis (log scale)',
             type: 'log',
             autorange: true,
             tickvals: monthTicks.map(tick => tick.value),
