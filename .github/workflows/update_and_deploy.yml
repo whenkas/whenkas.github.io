@@ -3,6 +3,7 @@ name: Update and Deploy Kaspa Data
 on:
   schedule:
     - cron: '0 16 * * *' # Runs at 16:00 UTC (8:00 AM PST) every day
+    - cron: '0 1 * * *'  # Runs at 01:00 UTC (5:00 PM PST) every day
   push:
     branches:
       - main

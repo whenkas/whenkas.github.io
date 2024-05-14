@@ -98,7 +98,7 @@ const KaspaPriceChart = () => {
 
     const performRegression = (parsedData, maxDays, minDays) => {
         const logData = parsedData.map(entry => [Math.log(entry.daysSinceGenesis), Math.log(entry.open)]);
-        const result = regression.linear(logData, { precision: 10 });
+        const result = regression.linear(logData);
         const extendedRegressionData = Array.from({ length: maxDays + 1 - minDays }, (_, i) => {
             const days = i + minDays;
             const predictedLogOpen = result.predict(Math.log(days))[1];

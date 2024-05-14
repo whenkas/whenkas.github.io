@@ -12,23 +12,30 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         const startTimestamp = start.unix();
         const endTimestamp = today.unix();
 
-        // Fetch KAS price history in BTC from ten months ago to today
-        const kaspaResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/kaspa/market_chart/range?vs_currency=btc&from=${startTimestamp}&to=${endTimestamp}`);
+        // Fetch KAS price history in USD from ten months ago to today
+        const kaspaResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/kaspa/market_chart/range?vs_currency=usd&from=${startTimestamp}&to=${endTimestamp}`);
         const kaspaData = kaspaResponse.data.prices;
 
-        if (!kaspaData || kaspaData.length === 0) {
-            console.log({ kaspaResponse: kaspaResponse });
+        // Fetch BTC price history in USD from ten months ago to today
+        const btcResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=${startTimestamp}&to=${endTimestamp}`);
+        const btcData = btcResponse.data.prices;
+
+        if (!kaspaData || kaspaData.length === 0 || !btcData || btcData.length === 0) {
+            console.log({ kaspaResponse: kaspaResponse, btcResponse: btcResponse });
             throw new Error('No data found');
         }
 
         // Prepare new CSV data, keeping only the first data point per day
         const newCsvData = [];
         const seenDates = new Set();
-        kaspaData.forEach(([date, priceInBTC]) => {
+        const btcPriceMap = new Map(btcData.map(([date, priceInUSD]) => [moment(date).format('YYYY-MM-DD'), priceInUSD]));
+
+        kaspaData.forEach(([date, priceInUSD]) => {
             const dateKey = moment(date).format('YYYY-MM-DD');
-            if (!seenDates.has(dateKey)) {
+            if (!seenDates.has(dateKey) && btcPriceMap.has(dateKey)) {
                 seenDates.add(dateKey);
-                newCsvData.push([dateKey, priceInBTC.toFixed(10)]);
+                const priceInBTC = priceInUSD / btcPriceMap.get(dateKey);
+                newCsvData.push([dateKey, priceInBTC]);
             }
         });
 
@@ -38,7 +45,7 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         if (fs.existsSync(existingFilePath)) {
             const existingCsvContent = fs.readFileSync(existingFilePath, 'utf8');
             const parsedExistingCsv = Papa.parse(existingCsvContent, { header: true, skipEmptyLines: true });
-            existingCsvData = parsedExistingCsv.data.map(entry => [moment(entry['Start']).format('YYYY-MM-DD'), parseFloat(entry['Open']).toFixed(10)]);
+            existingCsvData = parsedExistingCsv.data.map(entry => [moment(entry['Start']).format('YYYY-MM-DD'), parseFloat(entry['Open'])]);
         }
 
         // Merge data, preferring new data
