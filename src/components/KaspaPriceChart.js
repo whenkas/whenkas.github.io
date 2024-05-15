@@ -66,17 +66,29 @@ const KaspaPriceChart = () => {
         return totalSupply;
     };
 
+    // https://kaspa.org/tokenomics-emission-and-mining/
+    // Assumes 1 block per second. Will need to be updated with 10 blocks per second
     const calculateKaspaSupply = (currentDate) => {
         const preDeflationaryEndDate = new Date('2022-05-08');
+        const firstTwoWeeksEndDate = new Date('2021-11-21'); // 2 weeks after Genesis Date
         const secondsInYear = 365.25 * 24 * 60 * 60;
-        const preDeflationaryDuration = (preDeflationaryEndDate - GENESIS_DATE) / 1000;
+        const preDeflationaryDuration = (preDeflationaryEndDate - firstTwoWeeksEndDate) / 1000;
         let supply = 0;
 
-        if (currentDate <= preDeflationaryEndDate) {
+        if (currentDate <= firstTwoWeeksEndDate) {
             const secondsSinceStart = (currentDate - GENESIS_DATE) / 1000;
+            // Assuming an average reward rate of 500 KAS per second for the first 2+ weeks
             supply = 500 * secondsSinceStart;
+        } else if (currentDate <= preDeflationaryEndDate) {
+            // second part of pre-deflationary phase, constant 500 kas per second
+            const secondsFirstTwoWeeks = (firstTwoWeeksEndDate - GENESIS_DATE) / 1000;
+            supply = 500 * secondsFirstTwoWeeks;
+            const secondsSinceFirstTwoWeeks = (currentDate - firstTwoWeeksEndDate) / 1000;
+            supply += 500 * secondsSinceFirstTwoWeeks;
         } else {
-            supply = 500 * preDeflationaryDuration;
+            const secondsFirstTwoWeeks = (firstTwoWeeksEndDate - GENESIS_DATE) / 1000;
+            supply = 500 * secondsFirstTwoWeeks;
+            supply += 500 * preDeflationaryDuration;
             const secondsSinceChromaticStart = (currentDate - preDeflationaryEndDate) / 1000;
             let currentReward = 440;
             let totalSeconds = 0;
