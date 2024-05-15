@@ -240,9 +240,8 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/BTC PowerLaw and Kas Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
+        title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
-            title: 'Days since Genesis (log scale)',
             type: 'log',
             autorange: true,
             tickvals: monthTicks.map(tick => tick.value),
@@ -271,7 +270,7 @@ const KaspaPriceChart = () => {
         padding: '20px',
         fontFamily: 'Arial, sans-serif',
         textAlign: 'center',
-        fontSize: windowWidth > 600 ? '28px' : '20px',
+        fontSize: windowWidth > 600 ? '28px' : '24px',
         marginTop: '20px',
         borderRadius: '10px',
     };
@@ -313,7 +312,7 @@ const KaspaPriceChart = () => {
                 <h1>{intersectionEstimate.split(',')[0]}</h1>
                 <h2>{intersectionEstimate.split(',')[1]}</h2>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
+            <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
                 <Plot
                     data={plotData}
                     layout={plotLayout}
@@ -333,4 +332,4 @@ const KaspaPriceChart = () => {
     );
 };
 
-export default KaspaPriceChart;       
+export default KaspaPriceChart;
