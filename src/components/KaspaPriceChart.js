@@ -279,7 +279,7 @@ const KaspaPriceChart = () => {
 
     const titleStyle = {
         color: '#FFFFFF',
-        padding: '20px',
+        padding: '20px 40px',
         fontFamily: 'Arial, sans-serif',
         textAlign: 'center',
         fontSize: windowWidth > 600 ? '28px' : '24px',
