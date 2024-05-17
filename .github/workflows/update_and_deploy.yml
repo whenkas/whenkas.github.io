@@ -54,4 +54,9 @@ jobs:
 
       - name: Run deploy
         if: steps.git_status.outputs.changes == 'true'
-        run: yarn deploy
+        env:
+          GIT_USER: github-actions[bot]
+          GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          yarn deploy
