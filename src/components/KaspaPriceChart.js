@@ -9,8 +9,10 @@ const Plot = createPlotlyComponent(Plotly);
 
 const BITCOIN_HALVING_INTERVAL = 210000; // Blocks per halving
 const BITCOIN_GENESIS_DATE = new Date('2009-01-03');
+const ETH_GENESIS_DATE = new Date('2015-07-30');
 const GENESIS_DATE = new Date('2021-11-07');
 const YEARS_OUT = 12;
+const DEFAULT_ETH_INFLATION_RATE = 0.026; // 2.6% per year
 
 // Utility function to handle logarithmic transformations and power calculations
 const logBase = (base) => {
@@ -39,6 +41,12 @@ const KaspaPriceChart = () => {
     // Choose the base for logarithm (2 for log2, 10 for log10)
     const [logBaseSelection, setLogBaseSelection] = useState(2); // Default to log2
 
+    // Choose the asset (btc or eth)
+    const [assetSelection, setAssetSelection] = useState('btc'); // Default to btc
+
+    // ETH inflation rate
+    const [ethInflationRate, setEthInflationRate] = useState(DEFAULT_ETH_INFLATION_RATE);
+
     const { log, pow } = logBase(logBaseSelection);
 
     useEffect(() => {
@@ -46,7 +54,7 @@ const KaspaPriceChart = () => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [logBaseSelection]); // Re-fetch and calculate data when log base changes
+    }, [logBaseSelection, assetSelection, ethInflationRate]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -83,8 +91,6 @@ const KaspaPriceChart = () => {
         return totalSupply;
     };
 
-    // https://kaspa.org/tokenomics-emission-and-mining/
-    // Assumes 1 block per second. Will need to be updated with 10 blocks per second
     const calculateKaspaSupply = (currentDate) => {
         const preDeflationaryEndDate = new Date('2022-05-08');
         const firstTwoWeeksEndDate = new Date('2021-11-21'); // 2 weeks after Genesis Date
@@ -121,13 +127,19 @@ const KaspaPriceChart = () => {
         return supply;
     };
 
-    const updateKasOvertakeBTCPrice = (endDate) => {
+    const calculateEthSupply = (currentDate, inflationRate = DEFAULT_ETH_INFLATION_RATE) => {
+        const genesisSupply = 72000000; // Initial supply at genesis
+        const yearsSinceGenesis = (currentDate - ETH_GENESIS_DATE) / (1000 * 3600 * 24 * 365.25);
+        return genesisSupply * Math.pow(1 + inflationRate, yearsSinceGenesis);
+    };
+
+    const updateKasOvertakePrice = (endDate, asset) => {
         const daysRange = (endDate - GENESIS_DATE) / (1000 * 3600 * 24);
         return Array.from({ length: daysRange }, (_, i) => {
             const currentDate = new Date(GENESIS_DATE.getTime() + i * 24 * 3600 * 1000);
-            const btcSupply = calculateBitcoinSupply(currentDate);
+            const assetSupply = asset === 'btc' ? calculateBitcoinSupply(currentDate) : calculateEthSupply(currentDate, ethInflationRate);
             const kaspaSupply = calculateKaspaSupply(currentDate);
-            return btcSupply / kaspaSupply + 1e-8;
+            return assetSupply / kaspaSupply + 1e-8;
         });
     };
 
@@ -150,7 +162,7 @@ const KaspaPriceChart = () => {
         };
     };
 
-    const estimateIntersection = (regressionResult, kasOvertakeBTCPrice, minDays, maxDays) => {
+    const estimateIntersection = (regressionResult, kasOvertakePrice, minDays, maxDays) => {
         const today = new Date();
         let intersectionDate = null;
         let daysSinceGenesis = minDays;
@@ -158,11 +170,11 @@ const KaspaPriceChart = () => {
 
         while (!found && daysSinceGenesis <= maxDays) {
             const futureDate = new Date(GENESIS_DATE.getTime() + daysSinceGenesis * 24 * 3600 * 1000);
-            const priceKasOvertakesBtc = kasOvertakeBTCPrice[daysSinceGenesis];
+            const priceKasOvertakesAsset = kasOvertakePrice[daysSinceGenesis];
 
             const predictedPrice = pow(regressionResult.model.predict(log(daysSinceGenesis))[1]);
 
-            if (priceKasOvertakesBtc <= predictedPrice) {
+            if (priceKasOvertakesAsset <= predictedPrice) {
                 intersectionDate = futureDate;
                 found = true;
             } else {
@@ -184,8 +196,8 @@ const KaspaPriceChart = () => {
     const fetchData = async () => {
         try {
             const [historical_response, responseApi] = await Promise.all([
-                fetch('./data/kaspa_prices_btc_historical.csv'),
-                fetch('./data/kaspa_prices_btc_api.csv')
+                fetch(`./data/kaspa_prices_${assetSelection}_historical.csv`),
+                fetch(`./data/kaspa_prices_${assetSelection}_api.csv`)
             ]);
 
             const [historical_text, textApi] = await Promise.all([
@@ -222,8 +234,8 @@ const KaspaPriceChart = () => {
                 const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT * 360; // Extend by 10 years
                 const minDays = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const regressionResult = performRegression(parsedData, maxDays, minDays);
-                const kasOvertakeBTCPrice = updateKasOvertakeBTCPrice(new Date(GENESIS_DATE.getTime() + maxDays * 24 * 3600 * 1000));
-                const intersection = estimateIntersection(regressionResult, kasOvertakeBTCPrice, minDays, maxDays);
+                const kasOvertakePrice = updateKasOvertakePrice(new Date(GENESIS_DATE.getTime() + maxDays * 24 * 3600 * 1000), assetSelection);
+                const intersection = estimateIntersection(regressionResult, kasOvertakePrice, minDays, maxDays);
 
                 setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT));
 
@@ -246,10 +258,10 @@ const KaspaPriceChart = () => {
                     },
                     {
                         x: Array.from({ length: maxDays + 1 - minDays }, (_, i) => log(i + minDays)),
-                        y: kasOvertakeBTCPrice.map(price => log(price)),
+                        y: kasOvertakePrice.map(price => log(price)),
                         type: 'scatter',
                         mode: 'lines',
-                        name: 'Kas Overtake BTC Price',
+                        name: `Kas Overtake ${assetSelection.toUpperCase()} Price`,
                         line: { color: 'green', dash: 'dot' }
                     }
                 ]);
@@ -270,7 +282,7 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more than BTC log${logBaseSelection} scale (r²=${rSquared?.toFixed(4)})`,
+        title: `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
             type: 'linear',  // 'linear' because data is pre-transformed to log base
             autorange: true,
@@ -284,7 +296,7 @@ const KaspaPriceChart = () => {
             tickangle: 45,
         },
         yaxis: {
-            title: `Kas Price in BTC (log${logBaseSelection} scale)`,  // Updated title to reflect log base scale
+            title: `Kas Price in ${assetSelection.toUpperCase()} (log${logBaseSelection} scale)`,  // Updated title to reflect log base scale
             type: 'linear',  // 'linear' because data is pre-transformed to log base
             autorange: true,
             tickformat: '.2f',
@@ -338,7 +350,7 @@ const KaspaPriceChart = () => {
     return (
         <div style={containerStyle}>
             <div style={titleStyle}>
-                <h3>Kaspa Will Overtake Bitcoin around</h3>
+                <h3>Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
                 <h1>{intersectionEstimate.split(',')[0]}</h1>
                 <h2>{intersectionEstimate.split(',')[1]}</h2>
             </div>
@@ -356,6 +368,34 @@ const KaspaPriceChart = () => {
                         <option value="e">log base e</option>
                     </select>
                 </div>
+                <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="assetSelect" style={{ marginRight: '10px' }}>Select Asset:</label>
+                    <select
+                        id="assetSelect"
+                        value={assetSelection}
+                        onChange={(e) => setAssetSelection(e.target.value)}
+                        style={{ padding: '5px', fontSize: '16px' }}
+                    >
+                        <option value="btc">BTC</option>
+                        <option value="eth">ETH (Alpha)</option>
+                    </select>
+                </div>
+                {assetSelection === 'eth' && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <label htmlFor="ethInflationRate" style={{ marginRight: '10px' }}>ETH Inflation Rate (%):</label>
+                        <input
+                            id="ethInflationRate"
+                            type="range"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            value={ethInflationRate * 100}
+                            onChange={(e) => setEthInflationRate(e.target.value / 100)}
+                            style={{ width: '200px' }}
+                        />
+                        <span>{(ethInflationRate * 100).toFixed(1)}%</span>
+                    </div>
+                )}
                 <Plot
                     data={plotData}
                     layout={plotLayout}
