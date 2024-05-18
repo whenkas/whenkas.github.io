@@ -40,7 +40,7 @@ async function fetchAndSaveKaspaPriceHistoryInBTC(folder) {
         });
 
         // Load existing CSV data
-        const existingFilePath = `${folder}/kaspa_prices_api.csv`;
+        const existingFilePath = `${folder}/kaspa_prices_btc_api.csv`;
         let existingCsvData = [];
         if (fs.existsSync(existingFilePath)) {
             const existingCsvContent = fs.readFileSync(existingFilePath, 'utf8');

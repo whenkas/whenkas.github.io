@@ -185,7 +185,7 @@ const KaspaPriceChart = () => {
         try {
             const [historical_response, responseApi] = await Promise.all([
                 fetch('./data/kaspa_prices_btc_historical.csv'),
-                fetch('./data/kaspa_prices_btc_historical.csv')
+                fetch('./data/kaspa_prices_btc_api.csv')
             ]);
 
             const [historical_text, textApi] = await Promise.all([
