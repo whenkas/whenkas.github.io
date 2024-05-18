@@ -10,7 +10,22 @@ const Plot = createPlotlyComponent(Plotly);
 const BITCOIN_HALVING_INTERVAL = 210000; // Blocks per halving
 const BITCOIN_GENESIS_DATE = new Date('2009-01-03');
 const GENESIS_DATE = new Date('2021-11-07');
-const YEARS_OUT = 10;
+const YEARS_OUT = 12;
+
+// Utility function to handle logarithmic transformations and power calculations
+const logBase = (base) => {
+    if (base === 'e') {
+        return {
+            log: (x) => Math.log(x),  // Natural logarithm
+            pow: (y) => Math.exp(y)  // Exponential function
+        };
+    } else {
+        return {
+            log: (x) => Math.log(x) / Math.log(base),
+            pow: (y) => Math.pow(base, y)
+        };
+    }
+};
 
 const KaspaPriceChart = () => {
     const [plotData, setPlotData] = useState([]);
@@ -21,15 +36,17 @@ const KaspaPriceChart = () => {
     const [isResourcesOpen, setIsResourcesOpen] = useState(false);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+    // Choose the base for logarithm (2 for log2, 10 for log10)
+    const [logBaseSelection, setLogBaseSelection] = useState(2); // Default to log2
 
+    const { log, pow } = logBase(logBaseSelection);
 
     useEffect(() => {
         fetchData();
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-
-    });
+    }, [logBaseSelection]); // Re-fetch and calculate data when log base changes
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -115,16 +132,17 @@ const KaspaPriceChart = () => {
     };
 
     const performRegression = (parsedData, maxDays, minDays) => {
-        const logData = parsedData.map(entry => [Math.log(entry.daysSinceGenesis), Math.log(entry.open)]);
+        const logData = parsedData.map(entry => [log(entry.daysSinceGenesis), log(entry.open)]);
         const result = regression.linear(logData);
         const extendedRegressionData = Array.from({ length: maxDays + 1 - minDays }, (_, i) => {
             const days = i + minDays;
-            const predictedLogOpen = result.predict(Math.log(days))[1];
+            const predictedLogOpen = result.predict(log(days))[1];
             return {
                 daysSinceGenesis: days,
-                open: Math.exp(predictedLogOpen)
+                open: pow(predictedLogOpen)  // Transform back to original scale
             };
         });
+        console.log({ r2: result.r2 });
         return {
             model: result,
             regressionData: extendedRegressionData,
@@ -142,7 +160,7 @@ const KaspaPriceChart = () => {
             const futureDate = new Date(GENESIS_DATE.getTime() + daysSinceGenesis * 24 * 3600 * 1000);
             const priceKasOvertakesBtc = kasOvertakeBTCPrice[daysSinceGenesis];
 
-            const predictedPrice = Math.exp(regressionResult.model.predict(Math.log(daysSinceGenesis))[1]);
+            const predictedPrice = pow(regressionResult.model.predict(log(daysSinceGenesis))[1]);
 
             if (priceKasOvertakesBtc <= predictedPrice) {
                 intersectionDate = futureDate;
@@ -211,24 +229,24 @@ const KaspaPriceChart = () => {
 
                 setPlotData([
                     {
-                        x: parsedData.map(entry => entry.daysSinceGenesis),
-                        y: parsedData.map(entry => entry.open),
+                        x: parsedData.map(entry => log(entry.daysSinceGenesis)),
+                        y: parsedData.map(entry => log(entry.open)),
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: 'Open Prices',
                         marker: { color: 'blue' },
                     },
                     {
-                        x: regressionResult.regressionData.map(entry => entry.daysSinceGenesis),
-                        y: regressionResult.regressionData.map(entry => entry.open),
+                        x: regressionResult.regressionData.map(entry => log(entry.daysSinceGenesis)),
+                        y: regressionResult.regressionData.map(entry => log(entry.open)),
                         type: 'scatter',
                         mode: 'lines',
                         name: 'Kaspa Best Fit Line',
                         line: { color: 'red' }
                     },
                     {
-                        x: Array.from({ length: maxDays + 1 - minDays }, (_, i) => i + minDays),
-                        y: kasOvertakeBTCPrice,
+                        x: Array.from({ length: maxDays + 1 - minDays }, (_, i) => log(i + minDays)),
+                        y: kasOvertakeBTCPrice.map(price => log(price)),
                         type: 'scatter',
                         mode: 'lines',
                         name: 'Kas Overtake BTC Price',
@@ -252,11 +270,11 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more then BTC log scale (r²=${rSquared?.toFixed(4)})`,
+        title: `KAS/BTC PowerLaw and Price in BTC needed to be worth more than BTC log${logBaseSelection} scale (r²=${rSquared?.toFixed(4)})`,
         xaxis: {
-            type: 'log',
+            type: 'linear',  // 'linear' because data is pre-transformed to log base
             autorange: true,
-            tickvals: monthTicks.map(tick => tick.value),
+            tickvals: monthTicks.map(tick => log(tick.value)),  // Transform tick values to log base
             ticktext: monthTicks.map(tick => tick.label),
             tickfont: {
                 size: windowWidth > 600 ? 8 : 6,
@@ -266,10 +284,10 @@ const KaspaPriceChart = () => {
             tickangle: 45,
         },
         yaxis: {
-            title: 'Kas Price in BTC (log scale)',
-            type: 'log',
+            title: `Kas Price in BTC (log${logBaseSelection} scale)`,  // Updated title to reflect log base scale
+            type: 'linear',  // 'linear' because data is pre-transformed to log base
             autorange: true,
-            tickformat: '.0e',
+            tickformat: '.2f',
             exponentformat: 'e'
         },
         margin: { l: 50, r: 50, t: 50, b: 50 },
@@ -325,6 +343,19 @@ const KaspaPriceChart = () => {
                 <h2>{intersectionEstimate.split(',')[1]}</h2>
             </div>
             <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
+                <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="logBaseSelect" style={{ marginRight: '10px' }}>Select Logarithm Base:</label>
+                    <select
+                        id="logBaseSelect"
+                        value={logBaseSelection}
+                        onChange={(e) => setLogBaseSelection(e.target.value)}
+                        style={{ padding: '5px', fontSize: '16px' }}
+                    >
+                        <option value="2">log base 2</option>
+                        <option value="10">log base 10</option>
+                        <option value="e">log base e</option>
+                    </select>
+                </div>
                 <Plot
                     data={plotData}
                     layout={plotLayout}
