@@ -282,7 +282,7 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(4)})`,
+        title: `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`,
         xaxis: {
             type: 'linear',  // 'linear' because data is pre-transformed to log base
             autorange: true,
