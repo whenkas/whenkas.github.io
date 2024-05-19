@@ -78,7 +78,13 @@ async function fetchAndSaveHashrate(url, folder, filename, isBitcoin = false) {
     try {
         const response = await axios.get(url);
         let hashrate = parseFloat(response.data);
-        hashrate *= 1e12; // Convert terahashes to hashes
+        if (isBitcoin) {
+            hashrate *= 1e9;
+        }
+        else {
+            hashrate *= 1e12; // Convert terahashes to hashes
+        }
+
         const today = moment().format('YYYY-MM-DD');
 
         const filePath = path.join(folder, filename);
