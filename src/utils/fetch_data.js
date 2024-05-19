@@ -5,7 +5,7 @@ const moment = require('moment');
 const { stringify } = require('csv-stringify');
 const Papa = require('papaparse');
 
-async function fetchAndSavePriceHistory(folder, currency = 'btc') {
+async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
     const today = moment();
     const start = moment().subtract(10, 'months');
 
@@ -43,10 +43,12 @@ async function fetchAndSavePriceHistory(folder, currency = 'btc') {
             existingCsvData = parsedExistingCsv.data.map(entry => [moment(entry['Start']).format('YYYY-MM-DD'), parseFloat(entry['Open'])]);
         }
 
-        // Merge data, preferring new data
+        // Merge data, preferring existing data
         const dataMap = new Map(existingCsvData.map(([date, price]) => [date, [date, price]]));
         newCsvData.forEach(([date, price]) => {
-            dataMap.set(date, [date, price]);
+            if (!dataMap.has(date)) {
+                dataMap.set(date, [date, price]);
+            }
         });
 
         const mergedCsvData = Array.from(dataMap.values());
@@ -121,6 +123,6 @@ const folderPath = process.argv[2] || defaultFolderPath;
 const bitcoinUrl = 'https://blockchain.info/q/hashrate';
 const kaspaUrl = 'https://api.kaspa.org/info/hashrate?stringOnly=true';
 
-fetchAndSavePriceHistory(folderPath, 'btc');
+fetchAndSaveKaspaPriceHistory(folderPath, 'btc');
 fetchAndSaveHashrate(bitcoinUrl, folderPath, 'bitcoin_hashrate_api.csv', true); // Pass true for Bitcoin
 fetchAndSaveHashrate(kaspaUrl, folderPath, 'kaspa_hashrate_api.csv'); // No need to pass true for Kaspa
