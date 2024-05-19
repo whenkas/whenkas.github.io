@@ -5,7 +5,7 @@ const moment = require('moment');
 const { stringify } = require('csv-stringify');
 const Papa = require('papaparse');
 
-async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
+async function fetchAndSavePriceHistory(folder, currency = 'btc') {
     const today = moment();
     const start = moment().subtract(10, 'months');
 
@@ -14,11 +14,11 @@ async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
         const endTimestamp = today.unix();
 
         // Fetch KAS price history in the specified currency from ten months ago to today
-        const kaspaResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/kaspa/market_chart/range?vs_currency=${currency}&from=${startTimestamp}&to=${endTimestamp}`);
-        const kaspaData = kaspaResponse.data.prices;
+        const apiResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/kaspa/market_chart/range?vs_currency=${currency}&from=${startTimestamp}&to=${endTimestamp}`);
+        const apiData = apiResponse.data.prices;
 
-        if (!kaspaData || kaspaData.length === 0) {
-            console.log({ kaspaResponse });
+        if (!apiData || apiData.length === 0) {
+            console.log({ kaspaResponse: apiResponse });
             throw new Error('No data found');
         }
 
@@ -26,7 +26,7 @@ async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
         const newCsvData = [];
         const seenDates = new Set();
 
-        kaspaData.forEach(([date, price]) => {
+        apiData.forEach(([date, price]) => {
             const dateKey = moment(date).format('YYYY-MM-DD');
             if (!seenDates.has(dateKey)) {
                 seenDates.add(dateKey);
@@ -72,10 +72,13 @@ async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
 }
 
 // Function to fetch and save hashrate data
-async function fetchAndSaveHashrate(url, folder, filename) {
+async function fetchAndSaveHashrate(url, folder, filename, isBitcoin = false) {
     try {
         const response = await axios.get(url);
-        const hashrate = parseFloat(response.data);
+        let hashrate = parseFloat(response.data);
+        if (isBitcoin) {
+            hashrate *= 1e12; // Convert terahashes to hashes
+        }
         const today = moment().format('YYYY-MM-DD');
 
         const filePath = path.join(folder, filename);
@@ -115,6 +118,6 @@ const folderPath = process.argv[2] || defaultFolderPath;
 const bitcoinUrl = 'https://blockchain.info/q/hashrate';
 const kaspaUrl = 'https://api.kaspa.org/info/hashrate?stringOnly=true';
 
-fetchAndSaveKaspaPriceHistory(folderPath, 'btc');
-fetchAndSaveHashrate(bitcoinUrl, folderPath, 'bitcoin_hashrate_api.csv');
-fetchAndSaveHashrate(kaspaUrl, folderPath, 'kaspa_hashrate_api.csv');
+fetchAndSavePriceHistory(folderPath, 'btc');
+fetchAndSaveHashrate(bitcoinUrl, folderPath, 'bitcoin_hashrate_api.csv', true); // Pass true for Bitcoin
+fetchAndSaveHashrate(kaspaUrl, folderPath, 'kaspa_hashrate_api.csv'); // No need to pass true for Kaspa
