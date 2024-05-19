@@ -19,6 +19,16 @@ const logBase = (base) => {
             log: (x) => Math.log(x),  // Natural logarithm
             pow: (y) => Math.exp(y)  // Exponential function
         };
+    } else if (base === 2) {
+        return {
+            log: (x) => Math.log2(x),  // Logarithm base 2
+            pow: (y) => Math.pow(2, y)  // Exponential function base 2
+        };
+    } else if (base === 10) {
+        return {
+            log: (x) => Math.log10(x),  // Logarithm base 10
+            pow: (y) => Math.pow(10, y)  // Exponential function base 10
+        };
     } else {
         return {
             log: (x) => Math.log(x) / Math.log(base),
