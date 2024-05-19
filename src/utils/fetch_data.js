@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 const moment = require('moment');
 const { stringify } = require('csv-stringify');
 const Papa = require('papaparse');
@@ -70,6 +71,50 @@ async function fetchAndSaveKaspaPriceHistory(folder, currency = 'btc') {
     }
 }
 
-const folderPath = process.argv[2];
+// Function to fetch and save hashrate data
+async function fetchAndSaveHashrate(url, folder, filename) {
+    try {
+        const response = await axios.get(url);
+        const hashrate = parseFloat(response.data);
+        const today = moment().format('YYYY-MM-DD');
+
+        const filePath = path.join(folder, filename);
+        let existingData = [];
+
+        if (fs.existsSync(filePath)) {
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            const parsedData = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+            existingData = parsedData.data.map(entry => [entry['Start'], parseFloat(entry['Open'])]);
+        }
+
+        const dataMap = new Map(existingData.map(([date, rate]) => [date, [date, rate]]));
+        dataMap.set(today, [today, hashrate]);
+
+        const mergedData = Array.from(dataMap.values());
+
+        stringify(mergedData, { header: true, columns: ['Start', 'Open'] }, (err, output) => {
+            if (err) throw err;
+
+            if (!fs.existsSync(folder)) {
+                fs.mkdirSync(folder, { recursive: true });
+            }
+
+            fs.writeFile(filePath, output, (err) => {
+                if (err) throw err;
+                console.log(`Data saved to ${filePath}`);
+            });
+        });
+    } catch (error) {
+        console.error(`Error fetching hashrate from ${url}:`, error);
+    }
+}
+
+const defaultFolderPath = path.join(__dirname, '../../public/data');
+const folderPath = process.argv[2] || defaultFolderPath;
+
+const bitcoinUrl = 'https://blockchain.info/q/hashrate';
+const kaspaUrl = 'https://api.kaspa.org/info/hashrate?stringOnly=true';
+
 fetchAndSaveKaspaPriceHistory(folderPath, 'btc');
-fetchAndSaveKaspaPriceHistory(folderPath, 'eth');
+fetchAndSaveHashrate(bitcoinUrl, folderPath, 'bitcoin_hashrate_api.csv');
+fetchAndSaveHashrate(kaspaUrl, folderPath, 'kaspa_hashrate_api.csv');

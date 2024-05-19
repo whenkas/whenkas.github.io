@@ -8,7 +8,11 @@ See it at https://whenkas.github.io/
 
 Data is updated daily using a github action.
 
-If you want a fresh set of data, use the Data export from here https://coincodex.com/crypto/kaspa/historical-data/, priced in btc. Select the full time range of kaspa existance, frequency Daily, currency BTC. Export. Replace file public/data/kaspa_prices_btc_historical.csv
+If you want a fresh set of data
+
+Price: use the Data export from here https://coincodex.com/crypto/kaspa/historical-data/, priced in btc. Select the full time range of kaspa existance, frequency Daily, currency BTC. Export. Replace file public/data/kaspa_prices_btc_historical.csv
+
+Hashrate: Bitcoin json is here https://www.blockchain.com/explorer/charts/hash-rate. Select all timerange, export json. Replace file in whenkaspa/public/data/bitcoin_hashrate.json. Then run node src/utils/convert_bitcoin_hashrate_json_to_csv.js
 
 
 To run, get data from above, then 'yarn' && 'yarn start'
