@@ -377,7 +377,7 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="btc">BTC</option>
-                        <option value="eth">ETH (Alpha)</option>
+                        <option value="eth">ETH (Alpha, NOT READY)</option>
                     </select>
                 </div>
                 {assetSelection === 'eth' && (
@@ -386,8 +386,8 @@ const KaspaPriceChart = () => {
                         <input
                             id="ethInflationRate"
                             type="range"
-                            min="0"
-                            max="10"
+                            min="-4"
+                            max="4"
                             step="0.1"
                             value={ethInflationRate * 100}
                             onChange={(e) => setEthInflationRate(e.target.value / 100)}
