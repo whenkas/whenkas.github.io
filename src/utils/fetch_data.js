@@ -91,7 +91,11 @@ async function fetchAndSaveHashrate(url, folder, filename, isBitcoin = false) {
         }
 
         const dataMap = new Map(existingData.map(([date, rate]) => [date, [date, rate]]));
-        dataMap.set(today, [today, hashrate]);
+
+        // Only set new data if the date does not already exist
+        if (!dataMap.has(today)) {
+            dataMap.set(today, [today, hashrate]);
+        }
 
         const mergedData = Array.from(dataMap.values());
 
@@ -111,7 +115,6 @@ async function fetchAndSaveHashrate(url, folder, filename, isBitcoin = false) {
         console.error(`Error fetching hashrate from ${url}:`, error);
     }
 }
-
 const defaultFolderPath = path.join(__dirname, '../../public/data');
 const folderPath = process.argv[2] || defaultFolderPath;
 
