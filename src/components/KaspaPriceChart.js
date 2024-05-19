@@ -144,7 +144,6 @@ const KaspaPriceChart = () => {
                 open: pow(predictedLogOpen)  // Transform back to original scale
             };
         });
-        console.log({ r2: result.r2 });
         return {
             model: result,
             regressionData: extendedRegressionData,
