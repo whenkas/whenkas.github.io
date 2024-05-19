@@ -9,10 +9,8 @@ const Plot = createPlotlyComponent(Plotly);
 
 const BITCOIN_HALVING_INTERVAL = 210000; // Blocks per halving
 const BITCOIN_GENESIS_DATE = new Date('2009-01-03');
-const ETH_GENESIS_DATE = new Date('2015-07-30');
 const GENESIS_DATE = new Date('2021-11-07');
 const YEARS_OUT = 12;
-const DEFAULT_ETH_INFLATION_RATE = 0.026; // 2.6% per year
 
 // Utility function to handle logarithmic transformations and power calculations
 const logBase = (base) => {
@@ -44,8 +42,6 @@ const KaspaPriceChart = () => {
     // Choose the asset (btc or eth)
     const [assetSelection, setAssetSelection] = useState('btc'); // Default to btc
 
-    // ETH inflation rate
-    const [ethInflationRate, setEthInflationRate] = useState(DEFAULT_ETH_INFLATION_RATE);
 
     const { log, pow } = logBase(logBaseSelection);
 
@@ -54,7 +50,7 @@ const KaspaPriceChart = () => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [logBaseSelection, assetSelection, ethInflationRate]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
+    }, [logBaseSelection, assetSelection]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -127,17 +123,11 @@ const KaspaPriceChart = () => {
         return supply;
     };
 
-    const calculateEthSupply = (currentDate, inflationRate = DEFAULT_ETH_INFLATION_RATE) => {
-        const genesisSupply = 72000000; // Initial supply at genesis
-        const yearsSinceGenesis = (currentDate - ETH_GENESIS_DATE) / (1000 * 3600 * 24 * 365.25);
-        return genesisSupply * Math.pow(1 + inflationRate, yearsSinceGenesis);
-    };
-
     const updateKasOvertakePrice = (endDate, asset) => {
         const daysRange = (endDate - GENESIS_DATE) / (1000 * 3600 * 24);
         return Array.from({ length: daysRange }, (_, i) => {
             const currentDate = new Date(GENESIS_DATE.getTime() + i * 24 * 3600 * 1000);
-            const assetSupply = asset === 'btc' ? calculateBitcoinSupply(currentDate) : calculateEthSupply(currentDate, ethInflationRate);
+            const assetSupply = asset === 'btc' ? calculateBitcoinSupply(currentDate) : null
             const kaspaSupply = calculateKaspaSupply(currentDate);
             return assetSupply / kaspaSupply + 1e-8;
         });
@@ -380,22 +370,6 @@ const KaspaPriceChart = () => {
                         {/* <option value="eth">ETH (Alpha, NOT READY)</option> */}
                     </select>
                 </div>
-                {assetSelection === 'eth' && (
-                    <div style={{ marginBottom: '20px' }}>
-                        <label htmlFor="ethInflationRate" style={{ marginRight: '10px' }}>ETH Inflation Rate (%):</label>
-                        <input
-                            id="ethInflationRate"
-                            type="range"
-                            min="-4"
-                            max="4"
-                            step="0.1"
-                            value={ethInflationRate * 100}
-                            onChange={(e) => setEthInflationRate(e.target.value / 100)}
-                            style={{ width: '200px' }}
-                        />
-                        <span>{(ethInflationRate * 100).toFixed(1)}%</span>
-                    </div>
-                )}
                 <Plot
                     data={plotData}
                     layout={plotLayout}
