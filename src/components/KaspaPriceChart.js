@@ -377,7 +377,7 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="btc">BTC</option>
-                        <option value="eth">ETH (Alpha, NOT READY)</option>
+                        {/* <option value="eth">ETH (Alpha, NOT READY)</option> */}
                     </select>
                 </div>
                 {assetSelection === 'eth' && (
