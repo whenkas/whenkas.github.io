@@ -62,7 +62,7 @@ const KaspaPriceChart = () => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [logBaseSelection, assetSelection, mode]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
+    }, [logBaseSelection, assetSelection, modeSelection]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
