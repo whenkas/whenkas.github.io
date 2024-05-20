@@ -58,7 +58,7 @@ const KaspaPriceChart = () => {
     const { log, pow } = logBase(logBaseSelection);
 
     useEffect(() => {
-        fetchData();
+        fetchPrices();
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -194,7 +194,7 @@ const KaspaPriceChart = () => {
         }
     };
 
-    const fetchData = async (mode) => {
+    const fetchPrices = async () => {
         try {
             const [historical_response, responseApi] = await Promise.all([
                 fetch(`./data/kaspa_prices_${assetSelection}_historical.csv`),
