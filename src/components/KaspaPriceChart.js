@@ -52,6 +52,8 @@ const KaspaPriceChart = () => {
     // Choose the asset (btc or eth)
     const [assetSelection, setAssetSelection] = useState('btc'); // Default to btc
 
+    const [modeSelection, setModeSelection] = useState('prices'); // Default to prices
+
 
     const { log, pow } = logBase(logBaseSelection);
 
@@ -60,7 +62,7 @@ const KaspaPriceChart = () => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [logBaseSelection, assetSelection]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
+    }, [logBaseSelection, assetSelection, mode]); // Re-fetch and calculate data when log base, asset, or ETH inflation rate changes
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -192,7 +194,7 @@ const KaspaPriceChart = () => {
         }
     };
 
-    const fetchData = async () => {
+    const fetchData = async (mode) => {
         try {
             const [historical_response, responseApi] = await Promise.all([
                 fetch(`./data/kaspa_prices_${assetSelection}_historical.csv`),
@@ -368,7 +370,7 @@ const KaspaPriceChart = () => {
                     </select>
                 </div>
                 <div style={{ marginBottom: '20px' }}>
-                    <label htmlFor="assetSelect" style={{ marginRight: '10px' }}>Select Asset:</label>
+                    <label htmlFor="assetSelect" style={{ marginRight: '10px' }}>Select Asset To Overtake:</label>
                     <select
                         id="assetSelect"
                         value={assetSelection}
@@ -376,6 +378,18 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="btc">BTC</option>
+                    </select>
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="modeSelect" style={{ marginRight: '10px' }}>Select Mode:</label>
+                    <select
+                        id="modeSelect"
+                        value={modeSelection}
+                        onChange={(e) => setModeSelection(e.target.value)}
+                        style={{ padding: '5px', fontSize: '16px' }}
+                    >
+                        <option value="prices">Prices</option>
+                        <option value="hashrate">Hashrate (Coming Soon)</option>
                     </select>
                 </div>
                 <Plot
