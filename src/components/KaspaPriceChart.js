@@ -67,7 +67,7 @@ const KaspaPriceChart = () => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [assetSelection, modeSelection]);
+    }, [assetSelection, modeSelection, logBaseSelection]);
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - KASPA_GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -409,22 +409,23 @@ const KaspaPriceChart = () => {
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: graphTitle,
+        title: `KAS/${assetSelection.toUpperCase()} PowerLaw and ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`,
         xaxis: {
-            type: 'linear',  // 'linear' because data is pre-transformed to log base
+            type: 'linear',
             autorange: true,
-            tickvals: monthTicks.map(tick => log(tick.value)),  // Transform tick values to log base
-            ticktext: monthTicks.map(tick => tick.label),
+            tickvals: modeSelection === 'prices' ? monthTicks.map(tick => log(tick.value)) : undefined,
+            ticktext: modeSelection === 'prices' ? monthTicks.map(tick => tick.label) : undefined,
             tickfont: {
                 size: windowWidth > 600 ? 8 : 6,
                 family: 'Arial, sans-serif',
                 color: '#7f7f7f'
             },
             tickangle: 45,
+            title: modeSelection === 'hashrate' ? 'Days Since Genesis' : undefined,
         },
         yaxis: {
-            title: `Kas ${modeSelection} in ${assetSelection.toUpperCase()} (log${logBaseSelection} scale)`,  // Updated title to reflect log base scale
-            type: 'linear',  // 'linear' because data is pre-transformed to log base
+            title: `Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()} (log${logBaseSelection} scale)`,
+            type: 'linear',
             autorange: true,
             tickformat: '.2f',
             exponentformat: 'e'
@@ -433,7 +434,6 @@ const KaspaPriceChart = () => {
         paper_bgcolor: '#f4f4f4',
         plot_bgcolor: '#f4f4f4',
     };
-
     const titleStyle = {
         color: '#FFFFFF',
         padding: '20px 40px',
@@ -515,7 +515,7 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="prices">Prices</option>
-                        <option value="prices">Hashrate (coming soon)</option>
+                        {/* <option value="prices">Hashrate (coming soon)</option> */}
                     </select>
                 </div>
                 <Plot
