@@ -41,7 +41,7 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.git_status.outputs.changes == 'true'
+        continue-on-error: true
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -49,11 +49,9 @@ jobs:
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
       - name: Run predeploy
-        if: steps.git_status.outputs.changes == 'true'
         run: yarn predeploy
 
       - name: Run deploy
-        if: steps.git_status.outputs.changes == 'true'
         env:
           GIT_USER: github-actions[bot]
           GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
