@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import Papa from 'papaparse';
@@ -57,17 +57,6 @@ const KaspaPriceChart = () => {
 
 
     const { log, pow } = logBase(logBaseSelection);
-
-    useEffect(() => {
-        if (modeSelection === 'prices') {
-            fetchPrices();
-        } else if (modeSelection === 'hashrate') {
-            fetchHashrate();
-        }
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [assetSelection, modeSelection, logBaseSelection]);
 
     const daysSinceGenesis = (date) => {
         return Math.floor((date - KASPA_GENESIS_DATE) / (1000 * 60 * 60 * 24));
@@ -199,7 +188,7 @@ const KaspaPriceChart = () => {
         }
     };
 
-    const fetchPrices = async () => {
+    const fetchPrices = useCallback(async () => {
         const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
         setGraphTitle(title)
         try {
@@ -285,10 +274,11 @@ const KaspaPriceChart = () => {
             console.error('Error fetching or parsing data:', error);
             setLoading(false);
         }
-    };
+    }, [assetSelection, logBaseSelection, modeSelection, rSquared]);
 
-    const fetchHashrate = async () => {
+    const fetchHashrate = useCallback(async () => {
         const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
+        setGraphTitle(title)
         try {
             const [historical_response, responseApi, btcHistorical_response, btcApi_response] = await Promise.all([
                 fetch(`./data/kaspa_hashrate_historical.csv`),
@@ -405,11 +395,25 @@ const KaspaPriceChart = () => {
             console.error('Error fetching or parsing data:', error);
             setLoading(false);
         }
-    };
+    }, [performRegression, estimateIntersection, generateMonthTicks]);
+
+
+    useEffect(() => {
+        if (modeSelection === 'prices') {
+            fetchPrices();
+        } else if (modeSelection === 'hashrate') {
+            fetchHashrate();
+        }
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [assetSelection, modeSelection, logBaseSelection, fetchHashrate, fetchPrices]);
+
+
     const plotLayout = {
         width: windowWidth > 600 ? 920 : windowWidth - 40,
         height: windowWidth > 600 ? 440 : 300,
-        title: `KAS/${assetSelection.toUpperCase()} PowerLaw and ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`,
+        title: graphTitle,
         xaxis: {
             type: 'linear',
             autorange: true,
