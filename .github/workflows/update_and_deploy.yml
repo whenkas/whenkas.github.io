@@ -2,12 +2,12 @@ name: Update and Deploy Kaspa Data
 
 on:
   schedule:
-    - cron: '0 16 * * *' # Runs at 16:00 UTC (8:00 AM PST) every day
-    - cron: '10 0 * * *' # Runs at 00:10 UTC (4:10 PM PST) every day
+    - cron: '0 16 * * *'
+    - cron: '10 0 * * *'
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   update-and-deploy:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16' # Update Node.js version to 16
+          node-version: '16'
 
       - name: Install dependencies
         run: yarn install
@@ -34,13 +34,14 @@ jobs:
           git add public/data/*
           if git diff-index --quiet HEAD; then
             echo "No changes to commit"
-            echo "::set-output name=changes::false"
+            echo "changes=false" >> $GITHUB_ENV
           else
             echo "Changes detected"
-            echo "::set-output name=changes::true"
+            echo "changes=true" >> $GITHUB_ENV
           fi
 
       - name: Commit and push changes
+        if: env.changes == 'true'
         continue-on-error: true
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -49,7 +50,8 @@ jobs:
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
       - name: Run predeploy
-        run: yarn predeploy
+        run: |
+          CI=false yarn predeploy
 
       - name: Run deploy
         env:
