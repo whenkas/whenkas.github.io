@@ -189,7 +189,7 @@ const KaspaPriceChart = () => {
     };
 
     const fetchPrices = useCallback(async () => {
-        const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
+        const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
         setGraphTitle(title)
         try {
             const [historical_response, responseApi] = await Promise.all([
