@@ -54,6 +54,7 @@ const KaspaPriceChart = () => {
 
     const [modeSelection, setModeSelection] = useState('prices'); // Default to prices
     const [graphTitle, setGraphTitle] = useState('')
+    const [lastUpdated, setLastUpdated] = useState('');
 
 
     const { log, pow } = logBase(logBaseSelection);
@@ -228,6 +229,9 @@ const KaspaPriceChart = () => {
 
                 const parsedData = Array.from(dataMap.values()).sort((a, b) => a.date - b.date);
 
+                const latestDate = new Date(Math.max(...parsedData.map(entry => entry.date)));
+                setLastUpdated(latestDate.toLocaleDateString());
+
                 const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT * 360; // Extend by 10 years
                 const minDays = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const regressionResult = performRegression(parsedData, maxDays, minDays);
@@ -335,6 +339,10 @@ const KaspaPriceChart = () => {
                 });
 
                 const btcParsedData = Array.from(btcDataMap.values()).sort((a, b) => a.date - b.date);
+
+                const latestDate = new Date(Math.max(...parsedData.map(entry => entry.date)));
+                setLastUpdated(latestDate.toLocaleDateString());
+
 
                 const today = new Date();
                 const maxDays = Math.floor((today - KASPA_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT * 360; // Extend by 10 years
@@ -526,6 +534,11 @@ const KaspaPriceChart = () => {
                     data={plotData}
                     layout={plotLayout}
                 />
+
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
+                    Last Updated: {lastUpdated}
+                </div>
+
                 <button style={buttonStyle} onClick={() => setIsResourcesOpen(!isResourcesOpen)}>Toggle Resources</button>
                 <Collapse isOpened={isResourcesOpen}>
                     <div>
