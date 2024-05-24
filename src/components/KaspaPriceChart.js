@@ -10,7 +10,9 @@ const Plot = createPlotlyComponent(Plotly);
 const BITCOIN_HALVING_INTERVAL = 210000; // Blocks per halving
 const BITCOIN_GENESIS_DATE = new Date('2009-01-03');
 const KASPA_GENESIS_DATE = new Date('2021-11-07');
-const YEARS_OUT = 12;
+const genesisDateDifference = Math.floor((KASPA_GENESIS_DATE - BITCOIN_GENESIS_DATE) / (1000 * 3600 * 24));
+const YEARS_OUT_PRICES = 12;
+const YEARS_OUT_HASHRATE = 50;
 
 // Utility function to handle logarithmic transformations and power calculations
 const logBase = (base) => {
@@ -40,7 +42,6 @@ const logBase = (base) => {
 const KaspaPriceChart = () => {
     const [plotData, setPlotData] = useState([]);
     const [intersectionEstimate, setIntersectionEstimate] = useState('');
-    const [rSquared, setRSquared] = useState(null);
     const [monthTicks, setMonthTicks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isResourcesOpen, setIsResourcesOpen] = useState(false);
@@ -59,8 +60,13 @@ const KaspaPriceChart = () => {
 
     const { log, pow } = logBase(logBaseSelection);
 
-    const daysSinceGenesis = (date) => {
-        return Math.floor((date - KASPA_GENESIS_DATE) / (1000 * 60 * 60 * 24));
+    const daysSinceGenesis = (date, genesisDate) => {
+        return Math.floor((date - genesisDate) / (1000 * 60 * 60 * 24));
+    };
+    const convertToDate = (daysSinceGenesis, genesisDate) => {
+        const date = new Date(genesisDate);
+        date.setDate(date.getDate() + daysSinceGenesis);
+        return date;
     };
 
     const generateMonthTicks = (startYear, endYear) => {
@@ -153,6 +159,7 @@ const KaspaPriceChart = () => {
         });
         return {
             model: result,
+            predict: result.predict,
             regressionData: extendedRegressionData,
             r2: result.r2
         };
@@ -168,7 +175,7 @@ const KaspaPriceChart = () => {
             const futureDate = new Date(KASPA_GENESIS_DATE.getTime() + daysSinceGenesis * 24 * 3600 * 1000);
             const priceKasOvertakesAsset = kasOvertakePrice[daysSinceGenesis];
 
-            const predictedPrice = pow(regressionResult.model.predict(log(daysSinceGenesis))[1]);
+            const predictedPrice = pow(regressionResult.predict(log(daysSinceGenesis))[1]);
 
             if (priceKasOvertakesAsset <= predictedPrice) {
                 intersectionDate = futureDate;
@@ -190,8 +197,6 @@ const KaspaPriceChart = () => {
     };
 
     const fetchPrices = useCallback(async () => {
-        const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
-        setGraphTitle(title)
         try {
             const [historical_response, responseApi] = await Promise.all([
                 fetch(`./data/kaspa_prices_${assetSelection}_historical.csv`),
@@ -232,13 +237,13 @@ const KaspaPriceChart = () => {
                 const latestDate = new Date(Math.max(...parsedData.map(entry => entry.date)));
                 setLastUpdated(latestDate.toLocaleDateString());
 
-                const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT * 360; // Extend by 10 years
+                const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT_PRICES * 360; // Extend by 10 years
                 const minDays = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const regressionResult = performRegression(parsedData, maxDays, minDays);
                 const kasOvertakePrice = updateKasOvertakePrice(new Date(KASPA_GENESIS_DATE.getTime() + maxDays * 24 * 3600 * 1000), assetSelection);
                 const intersection = estimateIntersection(regressionResult, kasOvertakePrice, minDays, maxDays);
 
-                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT));
+                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_PRICES));
 
                 setPlotData([
                     {
@@ -267,8 +272,9 @@ const KaspaPriceChart = () => {
                     }
                 ]);
                 setIntersectionEstimate(intersection);
-                setRSquared(regressionResult.r2);
                 setLoading(false);
+                const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${regressionResult.r2?.toFixed(2)})`
+                setGraphTitle(title)
             }
             else {
                 console.error('No valid data available');
@@ -281,8 +287,6 @@ const KaspaPriceChart = () => {
     }, [assetSelection, logBaseSelection, modeSelection]);
 
     const fetchHashrate = useCallback(async () => {
-        const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
-        setGraphTitle(title)
         try {
             const [historical_response, responseApi, btcHistorical_response, btcApi_response] = await Promise.all([
                 fetch(`./data/kaspa_hashrate_historical.csv`),
@@ -291,38 +295,38 @@ const KaspaPriceChart = () => {
                 fetch(`./data/bitcoin_hashrate_api.csv`)
             ]);
 
-            const [historical_text, textApi, btcHistorical_text, btcApi_text] = await Promise.all([
+            const [kasHistoricalText, kasTextApi, btcHistorical_text, btcApi_text] = await Promise.all([
                 historical_response.text(),
                 responseApi.text(),
                 btcHistorical_response.text(),
                 btcApi_response.text()
             ]);
 
-            const historical_results = Papa.parse(historical_text, { header: true, skipEmptyLines: true });
-            const api_results = Papa.parse(textApi, { header: true, skipEmptyLines: true });
+            const kaspaHistoricalResults = Papa.parse(kasHistoricalText, { header: true, skipEmptyLines: true });
+            const kaspaApiResults = Papa.parse(kasTextApi, { header: true, skipEmptyLines: true });
             const btcHistorical_results = Papa.parse(btcHistorical_text, { header: true, skipEmptyLines: true });
             const btcApi_results = Papa.parse(btcApi_text, { header: true, skipEmptyLines: true });
 
-            if (historical_results.data && historical_results.data.length > 0) {
+            if (kaspaHistoricalResults.data && kaspaHistoricalResults.data.length > 0) {
                 const parseData = (data, genesisDate) => data.map(entry => {
                     const date = new Date(entry['Start']);
                     const daysSinceGenesis = (date - genesisDate) / (1000 * 3600 * 24);
                     return {
                         date,
                         daysSinceGenesis,
-                        value: parseFloat(entry['Value']) / 1e12 // Convert to TH/s
+                        open: parseFloat(entry['Open']) // Hashes / Second. May not actually be at open
                     };
-                }).filter(entry => !isNaN(entry.daysSinceGenesis) && !isNaN(entry.value));
+                }).filter(entry => !isNaN(entry.daysSinceGenesis) && !isNaN(entry.open));
 
-                const historicalData = parseData(historical_results.data, KASPA_GENESIS_DATE);
-                const apiData = parseData(api_results.data, KASPA_GENESIS_DATE);
+                const kaspaHistoricalData = parseData(kaspaHistoricalResults.data, KASPA_GENESIS_DATE);
+                const kaspaApiData = parseData(kaspaApiResults.data, KASPA_GENESIS_DATE);
                 const btcHistoricalData = parseData(btcHistorical_results.data, BITCOIN_GENESIS_DATE);
                 const btcApiData = parseData(btcApi_results.data, BITCOIN_GENESIS_DATE);
 
                 // Use a Map to merge data, preferring historicalData
                 const dataMap = new Map();
-                historicalData.forEach(entry => dataMap.set(entry.date.getTime(), entry));
-                apiData.forEach(entry => {
+                kaspaHistoricalData.forEach(entry => dataMap.set(entry.date.getTime(), entry));
+                kaspaApiData.forEach(entry => {
                     if (!dataMap.has(entry.date.getTime())) {
                         dataMap.set(entry.date.getTime(), entry);
                     }
@@ -345,7 +349,7 @@ const KaspaPriceChart = () => {
 
 
                 const today = new Date();
-                const maxDays = Math.floor((today - KASPA_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT * 360; // Extend by 10 years
+                const maxDays = Math.floor((today - KASPA_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT_HASHRATE * 360; // Extend by 10 years
                 const minDaysKaspa = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const minDaysBtc = Math.min(...btcParsedData.map(entry => entry.daysSinceGenesis));
 
@@ -353,38 +357,85 @@ const KaspaPriceChart = () => {
                 const regressionResult = performRegression(parsedData, maxDays, minDaysKaspa);
                 const btcRegressionResult = performRegression(btcParsedData, maxDays, minDaysBtc);
 
-                const intersection = estimateIntersection(regressionResult, btcRegressionResult, minDaysKaspa, maxDays);
+                const findIntersection = (kaspaData, btcData) => {
+                    let intersectionDate = null;
 
-                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT));
+                    let i = 0;
+                    let j = 0;
+
+                    while (i < kaspaData.length && j < btcData.length) {
+                        const kaspaPoint = kaspaData[i];
+                        const btcPoint = btcData[j];
+
+                        if (kaspaPoint.x.getTime() === btcPoint.x.getTime()) {
+                            if (kaspaPoint.y >= btcPoint.y) {
+                                intersectionDate = kaspaPoint.x;
+                                break;
+                            }
+                            i++;
+                            j++;
+                        } else if (kaspaPoint.x.getTime() < btcPoint.x.getTime()) {
+                            i++;
+                        } else {
+                            j++;
+                        }
+                    }
+
+                    if (intersectionDate) {
+                        const today = new Date();
+                        const years = (intersectionDate - today) / (1000 * 3600 * 24 * 365.25);
+                        const month = intersectionDate.toLocaleString('default', { month: 'long' });
+                        const year = intersectionDate.getFullYear();
+
+                        return `${month} ${year}, ${years.toFixed(1)} years from now`;
+                    } else {
+                        return "No intersection found within the available data range.";
+                    }
+                };
+
+                const kaspaPlotData = regressionResult.regressionData.map(entry => ({
+                    x: convertToDate(entry.daysSinceGenesis, KASPA_GENESIS_DATE),
+                    y: log(entry.open)
+                }));
+
+                const btcPlotData = btcRegressionResult.regressionData
+                    .map(entry => ({
+                        x: convertToDate(entry.daysSinceGenesis, BITCOIN_GENESIS_DATE),
+                        y: log(entry.open)
+                    }));
+
+                const intersection = findIntersection(kaspaPlotData, btcPlotData);
+
+                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE));
 
                 setPlotData([
                     {
-                        x: parsedData.map(entry => entry.daysSinceGenesis - minDaysKaspa), // Adjust x-axis to start from Kaspa genesis
-                        y: parsedData.map(entry => log(entry.value)),
+                        x: kaspaPlotData.map(entry => daysSinceGenesis(convertToDate(entry.daysSinceGenesis, KASPA_GENESIS_DATE), BITCOIN_GENESIS_DATE)), // Convert Kaspa daysSinceGenesis to dates
+                        y: parsedData.map(entry => log(entry.open)),
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: 'Kaspa Hashrate (TH/s)',
                         marker: { color: 'blue' },
                     },
                     {
-                        x: regressionResult.regressionData.map(entry => entry.daysSinceGenesis - minDaysKaspa), // Adjust x-axis to start from Kaspa genesis
-                        y: regressionResult.regressionData.map(entry => log(entry.value)),
+                        x: kaspaPlotData.map(entry => daysSinceGenesis(entry.x, BITCOIN_GENESIS_DATE)), // Convert Kaspa daysSinceGenesis to dates
+                        y: kaspaPlotData.map(entry => entry.y),
                         type: 'scatter',
                         mode: 'lines',
                         name: 'Kaspa Best Fit Line',
                         line: { color: 'red' }
                     },
                     {
-                        x: btcParsedData.map(entry => entry.daysSinceGenesis - minDaysKaspa), // Adjust x-axis to start from Kaspa genesis
-                        y: btcParsedData.map(entry => log(entry.value)),
+                        x: btcParsedData.map(entry => entry.daysSinceGenesis),
+                        y: btcParsedData.map(entry => log(entry.open)), // No filter needed for y values
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: 'BTC Hashrate (TH/s)',
                         marker: { color: 'green' },
                     },
                     {
-                        x: btcRegressionResult.regressionData.map(entry => entry.daysSinceGenesis - minDaysKaspa), // Adjust x-axis to start from Kaspa genesis
-                        y: btcRegressionResult.regressionData.map(entry => log(entry.value)),
+                        x: btcPlotData.map(entry => daysSinceGenesis(entry.x, BITCOIN_GENESIS_DATE)), // Convert Kaspa daysSinceGenesis to dates
+                        y: btcPlotData.map(entry => entry.y),
                         type: 'scatter',
                         mode: 'lines',
                         name: 'BTC Best Fit Line',
@@ -393,7 +444,9 @@ const KaspaPriceChart = () => {
                 ]);
 
                 setIntersectionEstimate(intersection);
-                setRSquared(regressionResult.r2);
+                const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection} scale (r²=${regressionResult.r2?.toFixed(2)})`
+                setGraphTitle(title)
+
                 setLoading(false);
             } else {
                 console.error('No valid data available');
