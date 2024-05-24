@@ -278,7 +278,7 @@ const KaspaPriceChart = () => {
             console.error('Error fetching or parsing data:', error);
             setLoading(false);
         }
-    }, [assetSelection, logBaseSelection, modeSelection, rSquared]);
+    }, [assetSelection, logBaseSelection, modeSelection]);
 
     const fetchHashrate = useCallback(async () => {
         const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection} scale (r²=${rSquared?.toFixed(2)})`
@@ -403,7 +403,7 @@ const KaspaPriceChart = () => {
             console.error('Error fetching or parsing data:', error);
             setLoading(false);
         }
-    }, [performRegression, estimateIntersection, generateMonthTicks]);
+    }, [assetSelection, logBaseSelection, modeSelection]);
 
 
     useEffect(() => {
@@ -527,7 +527,7 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="prices">Prices</option>
-                        {/* <option value="prices">Hashrate (coming soon)</option> */}
+                        {/* <option value="hashrate">Hashrate (coming soon)</option> */}
                     </select>
                 </div>
                 <Plot
