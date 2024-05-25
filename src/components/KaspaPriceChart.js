@@ -563,7 +563,7 @@ const KaspaPriceChart = () => {
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
                         <option value="prices">Prices</option>
-                        {/* <option value="hashrate">Hashrate (coming soon)</option> */}
+                        {/* <option value="hashrate">Hashrate (beta)</option> */}
                     </select>
                 </div>
                 <Plot
