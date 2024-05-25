@@ -56,6 +56,7 @@ const KaspaPriceChart = () => {
     const [modeSelection, setModeSelection] = useState('prices'); // Default to prices
     const [graphTitle, setGraphTitle] = useState('')
     const [lastUpdated, setLastUpdated] = useState('');
+    const [minDataDate, setMinDataDate] = useState('');
 
 
     const { log, pow } = logBase(logBaseSelection);
@@ -240,6 +241,8 @@ const KaspaPriceChart = () => {
 
                 const latestDate = new Date(Math.max(...parsedData.map(entry => entry.date)));
                 setLastUpdated(latestDate.toLocaleDateString());
+                const minDate = new Date(Math.min(...parsedData.map(entry => entry.date)));
+                setMinDataDate(minDate.toLocaleDateString())
 
                 const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT_PRICES * 360; // Extend by 10 years
                 const minDays = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
@@ -350,6 +353,9 @@ const KaspaPriceChart = () => {
 
                 const latestDate = new Date(Math.max(...parsedData.map(entry => entry.date)));
                 setLastUpdated(latestDate.toLocaleDateString());
+                const minDate = new Date(Math.min(...parsedData.map(entry => entry.date)));
+                setMinDataDate(minDate.toLocaleDateString())
+
 
 
                 const today = new Date();
@@ -493,6 +499,17 @@ const KaspaPriceChart = () => {
         padding: '10px',
     };
 
+    const warningBoxStyle = {
+        backgroundColor: '#FFF3CD',
+        color: '#856404',
+        border: '1px solid #FFEEBA',
+        borderRadius: '5px',
+        padding: '10px 20px',
+        margin: '20px 0',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+    };
+
     if (loading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <img src="/images/kaspa_pacman.gif" alt="Kaspa Pacman Animation" style={{ maxWidth: '300px' }} />
@@ -502,6 +519,11 @@ const KaspaPriceChart = () => {
 
     return (
         <div style={containerStyle}>
+            {modeSelection === 'hashrate' && (
+                <div style={warningBoxStyle}>
+                    <strong>Warning:</strong> We only have data starting from {minDataDate}. More time is needed for this to be accurate.
+                </div>
+            )}
             <div style={titleStyle}>
                 <h3>Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
                 <h1>{intersectionEstimate.split(',')[0]}</h1>
