@@ -453,7 +453,7 @@ const KaspaPriceChart = () => {
                 color: '#7f7f7f'
             },
             tickangle: 45,
-            title: modeSelection === 'hashrate' ? 'Days Since Genesis' : undefined,
+            title: modeSelection === 'prices' ? 'Days Since Kaspa Genesis' : 'Truncated Days Since Bitcoin Genesis',
         },
         yaxis: {
             title: `Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()} (log${logBaseSelection} scale)`,
