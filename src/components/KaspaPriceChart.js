@@ -69,13 +69,13 @@ const KaspaPriceChart = () => {
         return date;
     };
 
-    const generateMonthTicks = (startYear, endYear) => {
+    const generateMonthTicks = (startYear, endYear, genesisDate) => {
         const ticks = [];
         for (let year = startYear; year <= endYear; year++) {
             [0, 6].forEach(month => {
                 const date = new Date(year, month, 1);
                 ticks.push({
-                    value: daysSinceGenesis(date),
+                    value: daysSinceGenesis(date, genesisDate),
                     label: `${date.toLocaleString('default', { month: 'short' })} ${year}`
                 });
             });
@@ -196,6 +196,7 @@ const KaspaPriceChart = () => {
         }
     };
 
+
     const fetchPrices = useCallback(async () => {
         try {
             const [historical_response, responseApi] = await Promise.all([
@@ -243,7 +244,7 @@ const KaspaPriceChart = () => {
                 const kasOvertakePrice = updateKasOvertakePrice(new Date(KASPA_GENESIS_DATE.getTime() + maxDays * 24 * 3600 * 1000), assetSelection);
                 const intersection = estimateIntersection(regressionResult, kasOvertakePrice, minDays, maxDays);
 
-                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_PRICES));
+                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_PRICES, KASPA_GENESIS_DATE));
 
                 setPlotData([
                     {
@@ -406,7 +407,7 @@ const KaspaPriceChart = () => {
 
                 const intersection = findIntersection(kaspaPlotData, btcPlotData);
 
-                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE));
+                setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE, KASPA_GENESIS_DATE));
 
                 setPlotData([
                     {
