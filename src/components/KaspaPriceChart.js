@@ -10,7 +10,6 @@ const Plot = createPlotlyComponent(Plotly);
 const BITCOIN_HALVING_INTERVAL = 210000; // Blocks per halving
 const BITCOIN_GENESIS_DATE = new Date('2009-01-03');
 const KASPA_GENESIS_DATE = new Date('2021-11-07');
-const genesisDateDifference = Math.floor((KASPA_GENESIS_DATE - BITCOIN_GENESIS_DATE) / (1000 * 3600 * 24));
 const YEARS_OUT_PRICES = 12;
 const YEARS_OUT_HASHRATE = 12;
 
@@ -45,6 +44,7 @@ const KaspaPriceChart = () => {
     const defaultMode = urlParams.get('mode') || 'prices'; // Default to 'prices' if no parameter is provided
 
     const [plotData, setPlotData] = useState([]);
+    const [plotDataWithHighlights, setPlotDataWithHighlights] = useState(null);
     const [yAxisTicks, setYAxisTicks] = useState({ tickvals: [], ticktext: [] });
     const [intersectionEstimate, setIntersectionEstimate] = useState('');
     const [monthTicks, setMonthTicks] = useState([]);
@@ -557,30 +557,38 @@ const KaspaPriceChart = () => {
         fontSize: '14px',
     };
 
+    // Effect to update plot data with detailed hover text after initial render
+    useEffect(() => {
+        if (plotData && plotData.length > 0) {
+            // Generate hover text for each data point
+            const generateHoverText = (xData, yData, genesisDate, assetSelection) => {
+                return yData.map((yValue, index) => {
+                    const date = convertToDate(pow(xData[index]), genesisDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });;
+
+                    // Find the original y-value from yAxisTicks
+                    const originalYValue = pow(yValue).toExponential(2); // Convert to exponential form with 2 decimal places
+
+                    return `Date: ${date}<br>Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()}: ${originalYValue}`;
+                });
+            };
+            // Update plot data with hover text
+            // TODO - this slows down website performace. Fix this
+            const updatedPlotData = plotData.map(trace => ({
+                ...trace,
+                hovertemplate: generateHoverText(trace.x, trace.y, modeSelection === 'prices' ? KASPA_GENESIS_DATE : BITCOIN_GENESIS_DATE, modeSelection === 'prices' ? assetSelection.toUpperCase() : 'H/s')
+            }));
+
+            setPlotDataWithHighlights(updatedPlotData);
+        }
+    }, [plotData, modeSelection, assetSelection]);
+
+
     if (loading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <img src="/images/kaspa_pacman.gif" alt="Kaspa Pacman Animation" style={{ maxWidth: '300px' }} />
             <div>Loading...</div>
         </div>;
     }
-
-    // Generate hover text for each data point
-    const generateHoverText = (xData, yData, genesisDate, assetSelection) => {
-        return yData.map((yValue, index) => {
-            const date = convertToDate(pow(xData[index]), genesisDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });;
-
-            // Find the original y-value from yAxisTicks
-            const originalYValue = pow(yValue).toExponential(2); // Convert to exponential form with 2 decimal places
-
-            return `Date: ${date}<br>Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()}: ${originalYValue}`;
-        });
-    };
-    // Update plot data with hover text
-    // TODO - this slows down website performace. Fix this
-    const updatedPlotData = plotData.map(trace => ({
-        ...trace,
-        hovertemplate: generateHoverText(trace.x, trace.y, modeSelection === 'prices' ? KASPA_GENESIS_DATE : BITCOIN_GENESIS_DATE, modeSelection === 'prices' ? assetSelection.toUpperCase() : 'H/s')
-    }));
 
 
     return (
@@ -634,7 +642,7 @@ const KaspaPriceChart = () => {
                     </select>
                 </div>
                 <Plot
-                    data={updatedPlotData}
+                    data={plotDataWithHighlights || plotData}
                     layout={plotLayout}
                     config={{ responsive: true }}
                 />
