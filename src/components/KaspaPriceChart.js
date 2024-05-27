@@ -598,11 +598,11 @@ const KaspaPriceChart = () => {
                     <strong>Warning:</strong> We only have kaspa hashrate data starting from {minDataDate}. More time is needed for this estimate to have enough data
                 </div>
             )}
-            <div style={titleStyle}>
-                <h3>Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
-                <h1>{intersectionEstimate.split(',')[0]}</h1>
-                <h2>{intersectionEstimate.split(',')[1]}</h2>
-                <h4>R²: {r2?.toFixed(2)}</h4>
+            <div style={titleStyle} id="title">
+                <h3 id="title_template">Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
+                <h1 id="title_date">{intersectionEstimate.split(',')[0]}</h1>
+                <h2 id="title_duration">{intersectionEstimate.split(',')[1]}</h2>
+                <h4 id="title_r2">R²: {r2?.toFixed(2)}</h4>
             </div>
             <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
                 <div style={{ marginBottom: '20px' }}>
