@@ -88,7 +88,7 @@ const KaspaPriceChart = () => {
     };
 
     // Function to generate y-axis ticks as powers of 10
-    const generateYTick = (minY, maxY) => {
+    const generateYTick = (minY, maxY, unit) => {
         const yTickValues = [];
 
         // Calculate the smallest and largest powers of 10 within the range
@@ -103,7 +103,7 @@ const KaspaPriceChart = () => {
         // Update state with new tick values and their corresponding text
         setYAxisTicks({
             tickvals: yTickValues.map(value => log(value)), // Convert to log for plotting
-            ticktext: yTickValues.map(value => `${value.toExponential(0)} ${assetSelection.toUpperCase()}`) // Display original values with assetSelection
+            ticktext: yTickValues.map(value => `${value.toExponential(0)} ${unit.toUpperCase()}`) // Display original values with assetSelection
         });
     };
 
@@ -280,7 +280,7 @@ const KaspaPriceChart = () => {
 
                 const maxY = Math.max(...regressionResult.regressionData.map(entry => entry.open));
                 const minY = Math.min(...regressionResult.regressionData.map(entry => entry.open));
-                generateYTick(minY, maxY);
+                generateYTick(minY, maxY, assetSelection);
 
 
                 setPlotData([
@@ -409,7 +409,7 @@ const KaspaPriceChart = () => {
                 setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE, BITCOIN_GENESIS_DATE));
                 const maxY = Math.max(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
                 const minY = Math.min(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
-                generateYTick(minY, maxY);
+                generateYTick(minY, maxY, "H/S");
 
 
                 setPlotData([
