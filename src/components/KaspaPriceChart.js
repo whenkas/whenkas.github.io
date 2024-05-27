@@ -40,6 +40,10 @@ const logBase = (base) => {
 };
 
 const KaspaPriceChart = () => {
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const defaultMode = urlParams.get('mode') || 'prices'; // Default to 'prices' if no parameter is provided
+
     const [plotData, setPlotData] = useState([]);
     const [yAxisTicks, setYAxisTicks] = useState({ tickvals: [], ticktext: [] });
     const [intersectionEstimate, setIntersectionEstimate] = useState('');
@@ -54,7 +58,7 @@ const KaspaPriceChart = () => {
     // Choose the asset (btc or eth)
     const [assetSelection, setAssetSelection] = useState('btc'); // Default to btc
 
-    const [modeSelection, setModeSelection] = useState('prices'); // Default to prices
+    const [modeSelection, setModeSelection] = useState(defaultMode); // Default to mode from URL parameter
     const [graphTitle, setGraphTitle] = useState('')
     const [lastUpdated, setLastUpdated] = useState('');
     const [minDataDate, setMinDataDate] = useState('');
