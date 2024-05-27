@@ -413,7 +413,7 @@ const KaspaPriceChart = () => {
                 setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE, BITCOIN_GENESIS_DATE));
                 const maxY = Math.max(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
                 const minY = Math.min(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
-                generateYTick(minY, maxY, "H/S");
+                generateYTick(minY, maxY, "H/s");
 
 
                 setPlotData([
@@ -422,7 +422,7 @@ const KaspaPriceChart = () => {
                         y: parsedData.map(entry => log(entry.open)),
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: 'Kaspa Hashrate (TH/s)',
+                        name: 'Kaspa Hashrate (H/s)',
                         marker: { color: 'blue' },
                     },
                     {
@@ -438,7 +438,7 @@ const KaspaPriceChart = () => {
                         y: btcBestFitDataSinceKasGenesis.map(entry => log(entry.open)), // No filter needed for y values
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: 'BTC Hashrate (TH/s)',
+                        name: 'BTC Hashrate (H/s)',
                         marker: { color: 'green' },
                     },
                     {
@@ -511,7 +511,7 @@ const KaspaPriceChart = () => {
         },
         margin: { l: 50, r: 50, t: 50, b: 50 },
         paper_bgcolor: '#f4f4f4',
-        plot_bgcolor: '#f4f4f4',
+        plot_bgcolor: '#f4f4f4'
     };
     const titleStyle = {
         color: '#FFFFFF',
@@ -564,6 +564,24 @@ const KaspaPriceChart = () => {
         </div>;
     }
 
+    // Generate hover text for each data point
+    const generateHoverText = (xData, yData, genesisDate, assetSelection) => {
+        return yData.map((yValue, index) => {
+            const date = convertToDate(pow(xData[index]), genesisDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });;
+
+            // Find the original y-value from yAxisTicks
+            const originalYValue = pow(yValue).toExponential(2); // Convert to exponential form with 2 decimal places
+
+            return `Date: ${date}<br>Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()}: ${originalYValue}`;
+        });
+    };
+    // Update plot data with hover text
+    const updatedPlotData = plotData.map(trace => ({
+        ...trace,
+        hovertemplate: generateHoverText(trace.x, trace.y, modeSelection === 'prices' ? KASPA_GENESIS_DATE : BITCOIN_GENESIS_DATE, modeSelection === 'prices' ? assetSelection.toUpperCase() : 'H/s')
+    }));
+
+
     return (
         <div style={containerStyle}>
             {modeSelection === 'hashrate' && (
@@ -615,8 +633,9 @@ const KaspaPriceChart = () => {
                     </select>
                 </div>
                 <Plot
-                    data={plotData}
+                    data={updatedPlotData}
                     layout={plotLayout}
+                    config={{ responsive: true }}
                 />
 
                 <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
