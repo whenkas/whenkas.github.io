@@ -576,6 +576,7 @@ const KaspaPriceChart = () => {
         });
     };
     // Update plot data with hover text
+    // TODO - this slows down website performace. Fix this
     const updatedPlotData = plotData.map(trace => ({
         ...trace,
         hovertemplate: generateHoverText(trace.x, trace.y, modeSelection === 'prices' ? KASPA_GENESIS_DATE : BITCOIN_GENESIS_DATE, modeSelection === 'prices' ? assetSelection.toUpperCase() : 'H/s')
