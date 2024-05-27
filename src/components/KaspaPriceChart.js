@@ -521,7 +521,7 @@ const KaspaPriceChart = () => {
         <div style={containerStyle}>
             {modeSelection === 'hashrate' && (
                 <div style={warningBoxStyle}>
-                    <strong>Warning:</strong> We only have kaspa hashrate data starting from {minDataDate}. More time is needed for this to be accurate.
+                    <strong>Warning:</strong> We only have kaspa hashrate data starting from {minDataDate}. More time is needed for this estimate to have enough data
                 </div>
             )}
             <div style={titleStyle}>
