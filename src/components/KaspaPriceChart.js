@@ -41,6 +41,7 @@ const logBase = (base) => {
 
 const KaspaPriceChart = () => {
     const [plotData, setPlotData] = useState([]);
+    const [yAxisTicks, setYAxisTicks] = useState({ tickvals: [], ticktext: [] });
     const [intersectionEstimate, setIntersectionEstimate] = useState('');
     const [monthTicks, setMonthTicks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +58,8 @@ const KaspaPriceChart = () => {
     const [graphTitle, setGraphTitle] = useState('')
     const [lastUpdated, setLastUpdated] = useState('');
     const [minDataDate, setMinDataDate] = useState('');
+    const [r2, setR2] = useState('');
+
 
 
     const { log, pow } = logBase(logBaseSelection);
@@ -83,6 +86,29 @@ const KaspaPriceChart = () => {
         }
         return ticks;
     };
+
+    // Function to generate y-axis ticks as powers of 10
+    const generateYTick = (minY, maxY) => {
+        const yTickValues = [];
+
+        // Calculate the smallest and largest powers of 10 within the range
+        const minPower = Math.floor(Math.log10(minY));
+        const maxPower = Math.ceil(Math.log10(maxY));
+
+        // Generate tick values as powers of 10
+        for (let power = minPower; power <= maxPower; power++) {
+            yTickValues.push(Math.pow(10, power));
+        }
+
+        // Update state with new tick values and their corresponding text
+        setYAxisTicks({
+            tickvals: yTickValues.map(value => log(value)), // Convert to log for plotting
+            ticktext: yTickValues.map(value => `${value.toExponential(0)} ${assetSelection.toUpperCase()}`) // Display original values with assetSelection
+        });
+    };
+
+
+
 
     const calculateBitcoinSupply = (currentDate) => {
         const millisecondsPerBlock = 10 * 60 * 1000;
@@ -244,13 +270,18 @@ const KaspaPriceChart = () => {
                 const minDate = new Date(Math.min(...parsedData.map(entry => entry.date)));
                 setMinDataDate(minDate.toLocaleDateString())
 
-                const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT_PRICES * 360; // Extend by 10 years
+                const maxDays = Math.max(...parsedData.map(entry => entry.daysSinceGenesis)) + YEARS_OUT_PRICES * 360; // Extend by YEARS_OUT_PRICES years
                 const minDays = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const regressionResult = performRegression(parsedData, maxDays, minDays);
                 const kasOvertakePrice = updateKasOvertakePrice(new Date(KASPA_GENESIS_DATE.getTime() + maxDays * 24 * 3600 * 1000), assetSelection);
                 const intersection = estimateIntersection(regressionResult, kasOvertakePrice, minDays, maxDays);
 
                 setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_PRICES, KASPA_GENESIS_DATE));
+
+                const maxY = Math.max(...regressionResult.regressionData.map(entry => entry.open));
+                const minY = Math.min(...regressionResult.regressionData.map(entry => entry.open));
+                generateYTick(minY, maxY);
+
 
                 setPlotData([
                     {
@@ -282,6 +313,7 @@ const KaspaPriceChart = () => {
                 setLoading(false);
                 const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${regressionResult.r2?.toFixed(2)})`
                 setGraphTitle(title)
+                setR2(regressionResult.r2)
             }
             else {
                 console.error('No valid data available');
@@ -359,10 +391,11 @@ const KaspaPriceChart = () => {
 
 
                 const today = new Date();
-                const maxDays = Math.floor((today - KASPA_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT_HASHRATE * 360; // Extend by 10 years
-                const maxDaysBTC = Math.floor((today - BITCOIN_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT_HASHRATE * 360; // Extend by 10 years
+                const maxDays = Math.floor((today - KASPA_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT_HASHRATE * 360; // Extend by YEARS_OUT_HASHRATE years
+                const maxDaysBTC = Math.floor((today - BITCOIN_GENESIS_DATE) / (1000 * 3600 * 24)) + YEARS_OUT_HASHRATE * 360; // Extend by YEARS_OUT_HASHRATE years
                 const minDaysKaspa = Math.min(...parsedData.map(entry => entry.daysSinceGenesis));
                 const minDaysBtc = Math.min(...btcParsedData.map(entry => entry.daysSinceGenesis));
+
 
                 // Perform regression using the complete history
                 const regressionResult = performRegression(parsedData, maxDays, minDaysKaspa);
@@ -374,6 +407,10 @@ const KaspaPriceChart = () => {
                 const intersection = estimateIntersection(regressionResult, btcBestFitDataSinceKasGenesis.map(entry => entry.open), minDaysKaspa, maxDays);
 
                 setMonthTicks(generateMonthTicks("2022", new Date().getFullYear() + YEARS_OUT_HASHRATE, BITCOIN_GENESIS_DATE));
+                const maxY = Math.max(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
+                const minY = Math.min(...regressionResult.regressionData.map(entry => entry.open), ...btcRegressionResult.regressionData.map(entry => entry.open))
+                generateYTick(minY, maxY);
+
 
                 setPlotData([
                     {
@@ -413,6 +450,7 @@ const KaspaPriceChart = () => {
                 setIntersectionEstimate(intersection);
                 const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}. (kas r²=${regressionResult.r2?.toFixed(2)} btc r²=${btcRegressionResult.r2?.toFixed(2)})`
                 setGraphTitle(title)
+                setR2(regressionResult.r2)
 
                 setLoading(false);
             } else {
@@ -456,11 +494,16 @@ const KaspaPriceChart = () => {
             title: modeSelection === 'prices' ? 'Days Since Kaspa Genesis' : 'Truncated Days Since Bitcoin Genesis',
         },
         yaxis: {
-            title: `Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()} (log${logBaseSelection} scale)`,
+            title: `Kas ${modeSelection === 'prices' ? 'Price' : 'Hashrate'} in ${assetSelection.toUpperCase()}`,
             type: 'linear',
             autorange: true,
-            tickformat: '.2f',
-            exponentformat: 'e'
+            tickvals: yAxisTicks.tickvals,
+            ticktext: yAxisTicks.ticktext,
+            tickfont: {
+                size: windowWidth > 600 ? 8 : 6, // Adjust text size for better readability
+                family: 'Arial, sans-serif',
+                color: '#7f7f7f'
+            }
         },
         margin: { l: 50, r: 50, t: 50, b: 50 },
         paper_bgcolor: '#f4f4f4',
@@ -528,6 +571,7 @@ const KaspaPriceChart = () => {
                 <h3>Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
                 <h1>{intersectionEstimate.split(',')[0]}</h1>
                 <h2>{intersectionEstimate.split(',')[1]}</h2>
+                <h4>R²: {r2?.toFixed(2)}</h4>
             </div>
             <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
                 <div style={{ marginBottom: '20px' }}>
