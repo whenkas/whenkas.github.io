@@ -41,7 +41,7 @@ const logBase = (base) => {
 const KaspaPriceChart = () => {
 
     const urlParams = new URLSearchParams(window.location.search);
-    const defaultMode = urlParams.get('mode') || 'hashrate'; // Default to 'prices' if no parameter is provided
+    const defaultMode = urlParams.get('mode') || 'hashrate'; // Default to 'hashrate' if no parameter is provided
 
     const [plotData, setPlotData] = useState([]);
     const [plotDataWithHighlights, setPlotDataWithHighlights] = useState(null);
