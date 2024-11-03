@@ -41,7 +41,7 @@ const logBase = (base) => {
 const KaspaPriceChart = () => {
 
     const urlParams = new URLSearchParams(window.location.search);
-    const defaultMode = urlParams.get('mode') || 'prices'; // Default to 'prices' if no parameter is provided
+    const defaultMode = urlParams.get('mode') || 'hashrate'; // Default to 'prices' if no parameter is provided
 
     const [plotData, setPlotData] = useState([]);
     const [plotDataWithHighlights, setPlotDataWithHighlights] = useState(null);
@@ -63,6 +63,8 @@ const KaspaPriceChart = () => {
     const [lastUpdated, setLastUpdated] = useState('');
     const [minDataDate, setMinDataDate] = useState('');
     const [r2, setR2] = useState('');
+    const [btcR2, setBtcR2] = useState(null);
+
 
 
 
@@ -438,7 +440,7 @@ const KaspaPriceChart = () => {
                         y: btcBestFitDataSinceKasGenesis.map(entry => log(entry.open)), // No filter needed for y values
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: 'BTC Hashrate (H/s)',
+                        name: 'BTC Best Fit Line',
                         marker: { color: 'green' },
                     },
                     {
@@ -446,7 +448,7 @@ const KaspaPriceChart = () => {
                         y: btcOriginalDataSinceKasGenesis.map(entry => log(entry.open)),
                         type: 'scatter',
                         mode: 'lines',
-                        name: 'BTC Best Fit Line',
+                        name: 'BTC Hashrate (H/s)',
                         line: { color: 'green', dash: 'dot' }
                     }
                 ]);
@@ -455,6 +457,7 @@ const KaspaPriceChart = () => {
                 const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}. (kas r²=${regressionResult.r2?.toFixed(2)} btc r²=${btcRegressionResult.r2?.toFixed(2)})`
                 setGraphTitle(title)
                 setR2(regressionResult.r2)
+                setBtcR2(btcRegressionResult.r2);
 
                 setLoading(false);
             } else {
@@ -599,7 +602,9 @@ const KaspaPriceChart = () => {
                 </div>
             )}
             <div style={titleStyle} id="title">
-                <h3 id="title_template">Kaspa Will Overtake {assetSelection.toUpperCase()} around</h3>
+                <h3 id="title_template">
+                    Kaspa Will Overtake {assetSelection.toUpperCase()} in {modeSelection === 'prices' ? 'Market Cap' : 'Hashrate'} around
+                </h3>
                 <h1 id="title_date">{intersectionEstimate.split(',')[0]}</h1>
                 <h2 id="title_duration">{intersectionEstimate.split(',')[1]}</h2>
                 <h4 id="title_r2">R²: {r2?.toFixed(2)}</h4>
@@ -637,8 +642,9 @@ const KaspaPriceChart = () => {
                         onChange={(e) => setModeSelection(e.target.value)}
                         style={{ padding: '5px', fontSize: '16px' }}
                     >
+                        <option value="hashrate">Hashrate</option>
                         <option value="prices">Prices</option>
-                        {/* <option value="hashrate">Hashrate (beta)</option> */}
+
                     </select>
                 </div>
                 <Plot
