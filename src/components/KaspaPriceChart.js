@@ -663,7 +663,7 @@ const KaspaPriceChart = () => {
                         <img src="/images/kaspa_pacman.gif" alt="Kaspa Pacman Animation" style={{ display: 'block', margin: 'auto', maxWidth: '400px' }} />
                         <p>Thank you BTC_POWER_LAW / PlanG for the powerlaw and resources <a href="https://x.com/Giovann35084111/status/1757205787083251814">twitter link</a></p>
                         <p>Thank you Plan𐤊 for finding kas/btc has a powerlaw <a href="https://x.com/MikoGenno/status/1757498808668237845"> twitter link</a></p>
-                        <p>Also visit <a href="https://kasping.streamlit.app/">https://kasping.streamlit.app/</a> for more powerlaw graphs for kaspa</p>
+                        <p>Also visit <a href="https://www.kaspainsights.com/">https://www.kaspainsights.com/</a> and <a href="kas.fyi">kas.fyi</a> for another powerlaw graph and more insights for kaspa</p>
                         <p>Github for this project is at <a href="https://github.com/whenkas/whenkas.github.io">github</a></p>
                     </div>
                 </Collapse>
