@@ -14,7 +14,7 @@ Price: use the Data export from here https://coincodex.com/crypto/kaspa/historic
 
 Hashrate: Bitcoin json is here https://www.blockchain.com/explorer/charts/hash-rate. Select all timerange, export json. Replace file in whenkaspa/public/data/bitcoin_hashrate.json. Then run node src/utils/convert_bitcoin_hashrate_json_to_csv.js
 
-Kaspa json is here https://api.minerstat.com/v2/coins-history?coin=KAS&algo=KHeavyHash . Replace file  /Users/jordanhart/kaspacountdown/whenkaspa/public/data/kaspa_hashrate.json. Then run node 'src/utils/convert_all_hashrates.js'
+Kaspa json is here https://api.minerstat.com/v2/coins-history?coin=KAS&algo=KHeavyHash . Replace file public/data/kaspa_hashrate.json. Then run node 'src/utils/convert_all_hashrates.js'
 
 
 To run, get data from above, then 'yarn' && 'yarn start'
