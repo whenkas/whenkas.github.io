@@ -4,7 +4,8 @@ A predictor for when kaspa overtakes bitcoin. It finds when kaspa powerlaw for t
 
 See it at https://whenkas.github.io/
 
-<img width="958" alt="image" src="https://github.com/whenkas/whenkas.github.io/assets/169737990/211ce73c-1bc2-4c84-b29f-6c50cf8ec8bc">
+<img width="821" alt="image" src="https://github.com/user-attachments/assets/39737a78-595e-4a0f-815f-c48ed187ba82" />
+
 
 Data is updated daily using a github action.
 
