@@ -607,7 +607,12 @@ const KaspaPriceChart = () => {
                 </h3>
                 <h1 id="title_date">{intersectionEstimate.split(',')[0]}</h1>
                 <h2 id="title_duration">{intersectionEstimate.split(',')[1]}</h2>
-                <h4 id="title_r2">R²: {modeSelection === 'hashrate' ? btcR2 ? (r2 * btcR2)?.toFixed(2) : r2?.toFixed(2) : r2?.toFixed(2)}</h4>
+                <h4 id="title_r2">
+                    {modeSelection === 'hashrate'
+                        ? `R²: Kaspa ${r2?.toFixed(2)}, BTC ${btcR2?.toFixed(2)}`
+                        : `R²: ${r2?.toFixed(2)}`
+                    }
+                </h4>
             </div>
             <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
                 <div style={{ marginBottom: '20px' }}>
