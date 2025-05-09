@@ -317,7 +317,7 @@ const KaspaPriceChart = () => {
                 ]);
                 setIntersectionEstimate(intersection);
                 setLoading(false);
-                const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${regressionResult.r2?.toFixed(2)})`
+                const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale)`
                 setGraphTitle(title)
                 setR2(regressionResult.r2)
             }
@@ -454,7 +454,7 @@ const KaspaPriceChart = () => {
                 ]);
 
                 setIntersectionEstimate(intersection);
-                const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}. (kas r²=${regressionResult.r2?.toFixed(2)} btc r²=${btcRegressionResult.r2?.toFixed(2)})`
+                const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}.`
                 setGraphTitle(title)
                 setR2(regressionResult.r2)
                 setBtcR2(btcRegressionResult.r2);
