@@ -317,7 +317,7 @@ const KaspaPriceChart = () => {
                 ]);
                 setIntersectionEstimate(intersection);
                 setLoading(false);
-                const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale)`
+                const title = `KAS/${assetSelection.toUpperCase()} PowerLaw and Price in ${assetSelection.toUpperCase()} needed for Kaspa to be worth more than ${assetSelection.toUpperCase()} log${logBaseSelection} scale (r²=${regressionResult.r2?.toFixed(2)})`
                 setGraphTitle(title)
                 setR2(regressionResult.r2)
             }
@@ -454,7 +454,7 @@ const KaspaPriceChart = () => {
                 ]);
 
                 setIntersectionEstimate(intersection);
-                const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}.`
+                const title = `KAS and ${assetSelection.toUpperCase()} PowerLaw and Hashrate, and timeline to intersect using log ${logBaseSelection}. (kas r²=${regressionResult.r2?.toFixed(2)} btc r²=${btcRegressionResult.r2?.toFixed(2)})`
                 setGraphTitle(title)
                 setR2(regressionResult.r2)
                 setBtcR2(btcRegressionResult.r2);
@@ -607,12 +607,6 @@ const KaspaPriceChart = () => {
                 </h3>
                 <h1 id="title_date">{intersectionEstimate.split(',')[0]}</h1>
                 <h2 id="title_duration">{intersectionEstimate.split(',')[1]}</h2>
-                <h4 id="title_r2">
-                    {modeSelection === 'hashrate'
-                        ? `R²: Kaspa ${r2?.toFixed(2)}, BTC ${btcR2?.toFixed(2)}`
-                        : `R²: ${r2?.toFixed(2)}`
-                    }
-                </h4>
             </div>
             <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
                 <div style={{ marginBottom: '20px' }}>
